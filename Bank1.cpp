@@ -3,6 +3,7 @@
 #include <vector>
 #include <iomanip>
 #include <fstream>
+#include <limits>
 
 const std::string fileName = "HmedanBank.txt";
 struct stClientInfo
@@ -91,8 +92,107 @@ void showClientsList(const std::vector<stClientInfo> &vClients)
     }
     std::cout << "\n____________________________________________________________________________________________________________________\n";
 }
+
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber, stClientInfo &client)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            client = c;
+            return true;
+        }
+    }
+    return false;
+}
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string readString()
+{
+    std::string s;
+    std::cout << "Please Enter Account Number \n";
+    getline(std::cin, s);
+    return s;
+}
+
+stClientInfo readClientInfo(const std::vector<stClientInfo> &vClients)
+{
+    stClientInfo client;
+    std::cout << "Enter Account Number?";
+    getline(std::cin>>std::ws, client.accountNumber);
+    while (findClientByAccountNumber(vClients, client.accountNumber))
+    {
+        std::cout << "Client with [" << client.accountNumber << "] already exists, Enter another Account Number?";
+        getline(std::cin, client.accountNumber);
+    }
+    std::cout << "Enter Pine Code ?";
+    getline(std::cin, client.PinCode);
+    std::cout << "Enter Name  ?";
+    getline(std::cin, client.name);
+    std::cout << "Enter Phone ?";
+    getline(std::cin, client.phone);
+    std::cout << "Enter Account Balance?";
+    std::cin >> client.accountBalance;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return client;
+}
+
+std::string convertRecordToLine(const stClientInfo &client,const std::string& separator = "#//#")
+{
+    return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
+}
+
+
+bool addClient(const ::std::string &fileName,const std::vector<stClientInfo>& vClients)
+{
+    std::fstream myFile;
+    stClientInfo client = readClientInfo(vClients);
+    myFile.open(fileName, std::ios::app | std::ios::out);
+    if (myFile.is_open())
+    {
+        myFile<<std::endl;
+        myFile << convertRecordToLine(client);
+        myFile.close();
+        return true;
+    }
+    return false;
+}
+
+void addClientsScreen(const std::string& fileName)
+{
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout<<"-------------------------------------------------------------------------------\n";
+    std::cout<<"\t\t\t\ttAdd New Client\n";
+    std::cout<<"--------------------------------------------------------------------------------\n";
+    char addMore = 'y';
+    do{
+        std::cout<<"Adding New Client:\n";
+        if(addClient(fileName,vClients))
+        {
+            std::cout<<"Client Added Successfully, do you want to add more clients? Y/N?";
+            std::cin>>addMore;
+        }
+      else{
+        std::cerr<<"Error, try again\n";
+      }  
+    }while(tolower(addMore)=='y');
+}
+
+
 int main()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     showClientsList(vClients);
+   
+    addClientsScreen(fileName);
 }

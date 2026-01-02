@@ -6,5 +6,14 @@ first I will do Show Client List.
 1. load clients form file into vector
 1_1. convert line to vector
 1.1.1. Split the string
-2. Print Card e.x. | A150    | 1234      | Ahmad Hmedan   | 074801544444 | 500
+2. Print client info e.x. | A150    | 1234      | Ahmad Hmedan   | 074801544444 | 500
 3. Print all clients
+done
+
+second Add New Client
+1. find client by account number (I have vector off all clients already)
+1.1. read String function 
+2. Enter Client info
+3. Add new client (save to file)
+3.1. readClientInfo
+3.2. convert record to line
