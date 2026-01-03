@@ -219,8 +219,12 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
     return false;
 }
 
-void deleteClientByAccountNumber(const std::string &accountNumber, std::vector<stClientInfo> &vClients)
+void deleteClientByAccountNumber(std::vector<stClientInfo> &vClients)
 {
+    std::cout << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Delete Client Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    std::string accountNumber = readAccountNumber();
     stClientInfo client;
     if (findClientByAccountNumber(vClients, accountNumber, client))
     {
@@ -282,14 +286,14 @@ void updateClientInfoByAccountNumber(std::vector<stClientInfo> &vClients, const 
         {
             for (stClientInfo &C : vClients)
             {
-                if(C.accountNumber==accountNumber)
+                if (C.accountNumber == accountNumber)
                 {
                     updateClientInfo(C);
                 }
             }
-            if(saveClientsToFile(fileName,vClients))
+            if (saveClientsToFile(fileName, vClients))
             {
-                std::cout<<"Client Updated Successfully. \n";
+                std::cout << "Client Updated Successfully. \n";
             }
         }
     }
@@ -304,6 +308,6 @@ int main()
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     showClientsList(vClients);
 
-    std::string accountNumber = readAccountNumber();
-    updateClientInfoByAccountNumber(vClients, fileName);
+    
+    deleteClientByAccountNumber( vClients);
 }
