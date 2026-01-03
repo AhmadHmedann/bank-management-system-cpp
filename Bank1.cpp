@@ -253,7 +253,51 @@ void deleteClientByAccountNumber(const std::string &accountNumber, std::vector<s
     }
 }
 
+void updateClientInfo(stClientInfo &client)
+{
+    std::cout << "Enter PinCode? ";
+    getline(std::cin >> std::ws, client.PinCode);
+    std::cout << "Enter Name? ";
+    getline(std::cin, client.name);
+    std::cout << "Enter Phone? ";
+    getline(std::cin, client.phone);
+    std::cout << "Enter Balance? ";
+    std::cin >> client.accountBalance;
+}
 
+void updateClientInfoByAccountNumber(std::vector<stClientInfo> &vClients, const std::string &fileName)
+{
+    std::cout << "---------------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Update Client Info Screen\n";
+    std::cout << "----------------------------------------------------------------------------\n\n";
+    stClientInfo client;
+    std::string accountNumber = readAccountNumber();
+    if (findClientByAccountNumber(vClients, accountNumber, client))
+    {
+        printClientCard(client);
+        char confirm = 'y';
+        std::cout << "Are you sure you want to update this client? Y/N? ";
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stClientInfo &C : vClients)
+            {
+                if(C.accountNumber==accountNumber)
+                {
+                    updateClientInfo(C);
+                }
+            }
+            if(saveClientsToFile(fileName,vClients))
+            {
+                std::cout<<"Client Updated Successfully. \n";
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
+    }
+}
 
 int main()
 {
@@ -261,5 +305,5 @@ int main()
     showClientsList(vClients);
 
     std::string accountNumber = readAccountNumber();
-    deleteClientByAccountNumber(accountNumber, vClients);
+    updateClientInfoByAccountNumber(vClients, fileName);
 }

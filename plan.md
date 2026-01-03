@@ -23,3 +23,9 @@ Third Delete Client Screen
 0.1 add mark to delete into stClinetInfo
 1. Print Client card
 2. save  clients to file after deleting 
+ 
+Fourth Update Client Info
+0. fid client by account number
+0.1. print client card
+0.2 save client after updating
+1. Update Client Info
