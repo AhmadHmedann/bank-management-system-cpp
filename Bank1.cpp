@@ -219,7 +219,7 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
     return false;
 }
 
-void deleteClientByAccountNumber(std::vector<stClientInfo> &vClients)
+void deleteClientByAccountNumberScreen(std::vector<stClientInfo> &vClients)
 {
     std::cout << "--------------------------------------------------------------------\n";
     std::cout << "\t\t\t Delete Client Screen\n";
@@ -269,7 +269,7 @@ void updateClientInfo(stClientInfo &client)
     std::cin >> client.accountBalance;
 }
 
-void updateClientInfoByAccountNumber(std::vector<stClientInfo> &vClients, const std::string &fileName)
+void updateClientInfoByAccountNumberScreen(std::vector<stClientInfo> &vClients, const std::string &fileName)
 {
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Update Client Info Screen\n";
@@ -303,11 +303,11 @@ void updateClientInfoByAccountNumber(std::vector<stClientInfo> &vClients, const 
     }
 }
 
+
 int main()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     showClientsList(vClients);
 
     
-    deleteClientByAccountNumber( vClients);
 }
