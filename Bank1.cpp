@@ -303,11 +303,33 @@ void updateClientInfoByAccountNumberScreen(std::vector<stClientInfo> &vClients, 
     }
 }
 
+void findClientScreen(const std::vector<stClientInfo> &vClients)
+{
+    std::cout << "---------------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Find Client Info Screen\n";
+    std::cout << "----------------------------------------------------------------------------\n\n";
+    stClientInfo client;
+    std::string accountNumber = readAccountNumber();
+    if (findClientByAccountNumber(vClients, accountNumber, client))
+    {
+        printClientCard(client);
+    }
+    else
+    {
+        std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
+    }
+}
+
+void endProgramScreen()
+{
+    std::cout << "---------------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Program Ends :-)\n";
+    std::cout << "----------------------------------------------------------------------------\n\n";
+}
 
 int main()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     showClientsList(vClients);
-
-    
+    findClientScreen(vClients);
 }
