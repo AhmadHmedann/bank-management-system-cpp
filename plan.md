@@ -17,3 +17,9 @@ second Add New Client
 3. Add new client (save to file)
 3.1. readClientInfo
 3.2. convert record to line
+
+Third Delete Client Screen 
+0. find a Client by Account Number
+0.1 add mark to delete into stClinetInfo
+1. Print Client card
+2. save  clients to file after deleting 
