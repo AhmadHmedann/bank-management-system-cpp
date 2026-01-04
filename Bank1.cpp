@@ -259,6 +259,7 @@ void deleteClientByAccountNumberScreen()
                 if (c.accountNumber == accountNumber)
                 {
                     c.markToDelete = true;
+                    break;
                 }
             }
         }
@@ -311,6 +312,7 @@ void updateClientInfoByAccountNumberScreen()
                 if (C.accountNumber == accountNumber)
                 {
                     updateClientInfo(C);
+                    break;
                 }
             }
             if (saveClientsToFile(fileName, vClients))
