@@ -287,6 +287,7 @@ void updateClientInfo(stClientInfo &client)
     getline(std::cin, client.phone);
     std::cout << "Enter Balance? ";
     std::cin >> client.accountBalance;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 // 4444444444444444444444444444444
 void updateClientInfoByAccountNumberScreen()
