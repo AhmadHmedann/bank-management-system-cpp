@@ -82,11 +82,11 @@ std::vector<stClientInfo> loadClientsFromFile(const std::string &fileName)
 
 void printClientInfo(const stClientInfo &client)
 {
-    std::cout << "| " << std::setw(10) << std::left << client.accountNumber
-              << "| " << std::setw(8) << std::left << client.PinCode
-              << "| " << std::setw(20) << std::left << client.name
+    std::cout << "| " << std::setw(15) << std::left << client.accountNumber
+              << "| " << std::setw(10) << std::left << client.PinCode
+              << "| " << std::setw(40) << std::left << client.name
               << "| " << std::setw(12) << std::left << client.phone
-              << "| " << std::setw(20) << std::left << client.accountBalance;
+              << "| " << std::setw(12) << std::left << client.accountBalance;
 }
 // 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 void showClientsListScreen()
@@ -94,11 +94,11 @@ void showClientsListScreen()
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
     std::cout << "\n____________________________________________________________________________________________________________________\n";
-    std::cout << "| " << std::setw(10) << std::left << "Account Number"
-              << "| " << std::setw(8) << std::left << "Pin Code"
-              << "| " << std::setw(20) << std::left << "Client Name"
+    std::cout << "| " << std::setw(15) << std::left << "Account Number"
+              << "| " << std::setw(10) << std::left << "Pin Code"
+              << "| " << std::setw(40) << std::left << "Client Name"
               << "| " << std::setw(12) << std::left << "Phone"
-              << "| " << std::setw(20) << std::left << "Balance";
+              << "| " << std::setw(12) << std::left << "Balance";
     std::cout << "\n____________________________________________________________________________________________________________________\n\n";
     for (const stClientInfo &c : vClients)
     {
@@ -349,8 +349,9 @@ void endProgramScreen()
 
 void goBackToMainMenu()
 {
-    std::cout << "Press ENTER to go back to main menu...";
-    std::cin.get();
+    std::cout << "Press any key to go back to main menu...";
+    std::string line;
+    std::getline(std::cin >> std::ws, line);
     system("clear");
     mainMenu();
 }
@@ -395,10 +396,10 @@ void performMainMenuOption(enMainMenuOption option)
         break;
     case enMainMenuOption::eAddNewClient:
     {
-    system("clear");
-    addClientsScreen();
-    goBackToMainMenu();
-    break;    
+        system("clear");
+        addClientsScreen();
+        goBackToMainMenu();
+        break;
     }
     case enMainMenuOption::eDeleteClient:
     {
@@ -425,8 +426,6 @@ void performMainMenuOption(enMainMenuOption option)
     {
         system("clear");
         endProgramScreen();
-        std::cout << "Press ENTER to go back to main menu...";
-        std::cin.get();
         break;
     }
     default:
