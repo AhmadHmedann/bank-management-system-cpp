@@ -167,10 +167,11 @@ std::string convertRecordToLine(const stClientInfo &client, const std::string &s
     return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
 }
 
-bool addClient(const ::std::string &fileName, const std::vector<stClientInfo> &vClients)
+bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClients)
 {
     std::fstream myFile;
     stClientInfo client = readClientInfo(vClients);
+    vClients.push_back(client);
     myFile.open(fileName, std::ios::app | std::ios::out);
     if (myFile.is_open())
     {
@@ -180,6 +181,7 @@ bool addClient(const ::std::string &fileName, const std::vector<stClientInfo> &v
         myFile.close();
         return true;
     }
+    myFile.close();
     return false;
 }
 // 2222222222222222222222222222222222222222222222222
@@ -231,6 +233,7 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
         myFile.close();
         return true;
     }
+    myFile.close();
     return false;
 }
 // 333333333333333333333333333333333333333
