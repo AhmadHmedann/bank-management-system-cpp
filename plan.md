@@ -29,3 +29,14 @@ Fourth Update Client Info
 0.1. print client card
 0.2 save client after updating
 1. Update Client Info
+
+Finally I want a function to gather all Function
+maybe switch will solve this issue
+read number between 1 to 6
+
+what I did to solve that issue
+create enum contain the option 
+performMainMen function only to do the switch depend on the argument  which is the enum (option);
+goBackToMainMenu function to clear the screen and show mainMenu
+mainMenu function show the fist screen and performMainMenu
+

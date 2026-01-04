@@ -5,6 +5,8 @@
 #include <fstream>
 #include <limits>
 
+void mainMenu();
+
 const std::string fileName = "HmedanBank.txt";
 struct stClientInfo
 {
@@ -15,6 +17,17 @@ struct stClientInfo
     double accountBalance = 0;
     bool markToDelete = false;
 };
+
+enum enMainMenuOption
+{
+    eShowClientList = 1,
+    eAddNewClient = 2,
+    eDeleteClient = 3,
+    eUpdateClient = 4,
+    eFindClient = 5,
+    eEndProgram = 6
+};
+void performMainMenuOption(enMainMenuOption);
 
 std::vector<std::string> vSplit(std::string s, const std::string &delimiter)
 {
@@ -75,9 +88,10 @@ void printClientInfo(const stClientInfo &client)
               << "| " << std::setw(12) << std::left << client.phone
               << "| " << std::setw(20) << std::left << client.accountBalance;
 }
-
-void showClientsList(const std::vector<stClientInfo> &vClients)
+// 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+void showClientsListScreen()
 {
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
     std::cout << "\n____________________________________________________________________________________________________________________\n";
     std::cout << "| " << std::setw(10) << std::left << "Account Number"
@@ -160,15 +174,16 @@ bool addClient(const ::std::string &fileName, const std::vector<stClientInfo> &v
     myFile.open(fileName, std::ios::app | std::ios::out);
     if (myFile.is_open())
     {
-        myFile << std::endl;
+
         myFile << convertRecordToLine(client);
+        myFile << std::endl;
         myFile.close();
         return true;
     }
     return false;
 }
-
-void addClientsScreen(const std::string &fileName)
+// 2222222222222222222222222222222222222222222222222
+void addClientsScreen()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "-------------------------------------------------------------------------------\n";
@@ -218,10 +233,12 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
     }
     return false;
 }
-
-void deleteClientByAccountNumberScreen(std::vector<stClientInfo> &vClients)
+// 333333333333333333333333333333333333333
+void deleteClientByAccountNumberScreen()
 {
-    std::cout << "--------------------------------------------------------------------\n";
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout
+        << "--------------------------------------------------------------------\n";
     std::cout << "\t\t\t Delete Client Screen\n";
     std::cout << "--------------------------------------------------------------------\n\n";
     std::string accountNumber = readAccountNumber();
@@ -268,9 +285,10 @@ void updateClientInfo(stClientInfo &client)
     std::cout << "Enter Balance? ";
     std::cin >> client.accountBalance;
 }
-
-void updateClientInfoByAccountNumberScreen(std::vector<stClientInfo> &vClients, const std::string &fileName)
+// 4444444444444444444444444444444
+void updateClientInfoByAccountNumberScreen()
 {
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Update Client Info Screen\n";
     std::cout << "----------------------------------------------------------------------------\n\n";
@@ -302,10 +320,12 @@ void updateClientInfoByAccountNumberScreen(std::vector<stClientInfo> &vClients, 
         std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
     }
 }
-
-void findClientScreen(const std::vector<stClientInfo> &vClients)
+// 5555555
+void findClientScreen()
 {
-    std::cout << "---------------------------------------------------------------------------\n";
+    const std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout
+        << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Find Client Info Screen\n";
     std::cout << "----------------------------------------------------------------------------\n\n";
     stClientInfo client;
@@ -327,9 +347,93 @@ void endProgramScreen()
     std::cout << "----------------------------------------------------------------------------\n\n";
 }
 
+void goBackToMainMenu()
+{
+    std::cout << "Press ENTER to go back to main menu...";
+    std::cin.get();
+    system("clear");
+    mainMenu();
+}
+
+short readNumberBetween(short from, short to)
+
+{
+    short num;
+    do
+    {
+        std::cout << "Choose what do you want to do?  [1 to 6]?\n";
+        std::cin >> num;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    } while (num < from || num > to);
+    return num;
+}
+
+void mainMenu()
+{
+    system("clear");
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t\t\t\tMain Menu Screen\n";
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t[1] Show Client List.\n";
+    std::cout << "\t[2] Add New Client.\n";
+    std::cout << "\t[3] Delete Client.\n";
+    std::cout << "\t[4] Update Client.\n";
+    std::cout << "\t[5] Find Client.\n";
+    std::cout << "\t[6] Exit.\n";
+    std::cout << "====================================================================================================\n";
+    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 6));
+}
+void performMainMenuOption(enMainMenuOption option)
+{
+    switch (option)
+    {
+    case enMainMenuOption::eShowClientList:
+        system("clear");
+        showClientsListScreen();
+        goBackToMainMenu();
+
+        break;
+    case enMainMenuOption::eAddNewClient:
+    {
+    system("clear");
+    addClientsScreen();
+    goBackToMainMenu();
+    break;    
+    }
+    case enMainMenuOption::eDeleteClient:
+    {
+        system("clear");
+        deleteClientByAccountNumberScreen();
+        goBackToMainMenu();
+        break;
+    }
+    case enMainMenuOption::eUpdateClient:
+    {
+        system("clear");
+        updateClientInfoByAccountNumberScreen();
+        goBackToMainMenu();
+        break;
+    }
+    case enMainMenuOption::eFindClient:
+    {
+        system("clear");
+        findClientScreen();
+        goBackToMainMenu();
+        break;
+    }
+    case enMainMenuOption::eEndProgram:
+    {
+        system("clear");
+        endProgramScreen();
+        std::cout << "Press ENTER to go back to main menu...";
+        std::cin.get();
+        break;
+    }
+    default:
+        break;
+    }
+}
 int main()
 {
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    showClientsList(vClients);
-    findClientScreen(vClients);
+    mainMenu();
 }
