@@ -216,7 +216,7 @@ void printClientCard(const stClientInfo &client)
 {
     std::cout << "The Following are the client details\n";
     std::cout << "----------------------------------------------------------------\n";
-    std::cout << "Account Number   : " << client.accountNumber
+    std::cout << "Account Number : " << client.accountNumber
               << "\nPin Code       : " << client.PinCode
               << "\nName           : " << client.name
               << "\nPhone          : " << client.phone
@@ -375,7 +375,7 @@ short readNumberBetween(short from, short to)
     short num;
     do
     {
-        std::cout << "Choose what do you want to do?  [1 to 6]?\n";
+        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
         std::cin >> num;
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     } while (num < from || num > to);
@@ -444,7 +444,7 @@ void performMainMenuOption(enMainMenuOption option)
         break;
     }
     case enMainMenuOption::eTransaction:
-    transactionMenu();
+        transactionMenu();
     default:
         break;
     }
@@ -465,46 +465,53 @@ double readPositiveNumber(std::string message)
     return num;
 }
 
-void depositMoneyInAccount(const std::string &accountNumber)
+bool depositBalanceToClientByAccountNumber(const std::string &accountNumber, const double &amount, std::vector<stClientInfo> &vClients)
 {
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    stClientInfo client;
-    if (findClientByAccountNumber(vClients, accountNumber, client))
+
+    std::cout << "Are you sure you want to perform this transaction? Y/N? ";
+    char confirm = 'Y';
+    std::cin >> confirm;
+    if (tolower(confirm) == 'y')
     {
-
-        printClientCard(client);
-
-        int amount = readPositiveNumber("Please Enter Deposit Amount?");
-        std::cout << "Are you sure you want to perform this transaction? Y/N? ";
-        char confirm = 'Y';
-        std::cin >> confirm;
-        if (tolower(confirm) == 'y')
+        for (stClientInfo &C : vClients)
         {
-            for (stClientInfo &C : vClients)
+            if (C.accountNumber == accountNumber)
             {
-                if (C.accountNumber == accountNumber)
-                {
-                    C.accountBalance += amount;
-                    std::cout << "Done successfully the new balance is" << C.accountBalance << std::endl;
-                    break;
-                }
+                C.accountBalance += amount;
+                saveClientsToFile(fileName, vClients);
+                std::cout << "Done successfully the new balance is:  " << C.accountBalance << std::endl;
+                return true;
             }
-            saveClientsToFile(fileName, vClients);
         }
     }
-    else
-    {
-        std::cout << "Client with [" << accountNumber << "] is not exist.";
-    }
+    return false;
 }
 
-void withDrawMoneyFromAccount(const std::string &accountNumber)
+void depositMoneyInAccount( std::string &accountNumber)
+{
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    stClientInfo client;
+    while (!findClientByAccountNumber(vClients, accountNumber, client))
+    {
+        std::cout << "Client with [" << accountNumber << "] is not exist.\n";
+        accountNumber = readAccountNumber();
+    }
+
+    printClientCard(client);
+    int amount = readPositiveNumber("Please Enter Deposit Amount?");
+    depositBalanceToClientByAccountNumber(accountNumber,amount,vClients);
+}
+
+void withDrawMoneyFromAccount( std::string &accountNumber)
 {
 
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     stClientInfo client;
-    if (findClientByAccountNumber(vClients, accountNumber, client))
-    {
+        while(!findClientByAccountNumber(vClients,accountNumber,client))
+        {
+            std::cout << "Client with [" << accountNumber << "] is not exist.";
+            accountNumber=readAccountNumber();
+        }
 
         printClientCard(client);
 
@@ -514,28 +521,7 @@ void withDrawMoneyFromAccount(const std::string &accountNumber)
             std::cout << "Amount Exceeds the balance, you can withdraw up to: " << client.accountBalance << std::endl;
             amount = readPositiveNumber("Please Enter another amount");
         }
-
-        std::cout << "Are you sure you want to perform this transaction? Y/N? ";
-        char confirm = 'Y';
-        std::cin >> confirm;
-        if (tolower(confirm) == 'y')
-        {
-            for (stClientInfo &C : vClients)
-            {
-                if (C.accountNumber == accountNumber)
-                {
-                    C.accountBalance -= amount;
-                    std::cout << "Done successfully the new balance is" << C.accountBalance << std::endl;
-                    break;
-                }
-            }
-            saveClientsToFile(fileName, vClients);
-        }
-    }
-    else
-    {
-        std::cout << "Client with [" << accountNumber << "] is not exist.";
-    }
+        depositBalanceToClientByAccountNumber(accountNumber,amount* -1,vClients);
 }
 
 void depositScreen()
@@ -585,7 +571,7 @@ void showTransactionList()
     std::cout << "\t\t\t\t\t\tTotal Balance = " << total << std::endl;
 }
 
-enum enTransactionMenu
+enum enTransactionMenuOption
 {
     eDeposit = 1,
     eWithdraw = 2,
@@ -602,26 +588,26 @@ void goBackToTransactionMenu()
     transactionMenu();
 }
 
-void performTransactionMenu(enTransactionMenu choose)
+void performTransactionMenu(enTransactionMenuOption choose)
 {
     switch (choose)
     {
-    case enTransactionMenu::eDeposit:
+    case enTransactionMenuOption::eDeposit:
         system("clear");
         depositScreen();
         goBackToTransactionMenu();
         break;
-    case enTransactionMenu::eWithdraw:
+    case enTransactionMenuOption::eWithdraw:
         system("clear");
         withdrawScreen();
         goBackToTransactionMenu();
         break;
-    case enTransactionMenu::eTotalBalance:
+    case enTransactionMenuOption::eTotalBalance:
         system("clear");
         showTransactionList();
         goBackToTransactionMenu();
         break;
-    case enTransactionMenu::eMainMenu:
+    case enTransactionMenuOption::eMainMenu:
         mainMenu();
         break;
     default:
@@ -640,7 +626,7 @@ void transactionMenu()
     std::cout << "\t[3] Total Balance.\n";
     std::cout << "\t[4] Main Menu.\n";
     std::cout << "=======================================================================================================\n";
-    performTransactionMenu((enTransactionMenu)readNumberBetween(1, 4));
+    performTransactionMenu((enTransactionMenuOption)readNumberBetween(1, 4));
 }
 
 int main()
