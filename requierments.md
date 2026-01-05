@@ -145,10 +145,10 @@ Choose What do you want to do? [1 to 6]?
 ===========================================================
                     Transaction Menu Screen
 ===========================================================
-        [1] Deposit/
+        [1] Deposit.
         [2] Withdraw.
         [3] Total Balances.
-        [] Main Menu.
+        [4] Main Menu.
 ===========================================================
 Choose What do you want to do? [1 to 4]?
 

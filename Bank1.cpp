@@ -6,7 +6,7 @@
 #include <limits>
 
 void mainMenu();
-
+void transactionMenu();
 const std::string fileName = "HmedanBank.txt";
 struct stClientInfo
 {
@@ -456,6 +456,7 @@ double readPositiveNumber(std::string message)
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return num;
 }
+
 void depositMoneyInAccount(const std::string &accountNumber)
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
@@ -488,6 +489,7 @@ void depositMoneyInAccount(const std::string &accountNumber)
         std::cout << "Client with [" << accountNumber << "] is not exist.";
     }
 }
+
 void withDrawMoneyFromAccount(const std::string &accountNumber)
 {
 
@@ -545,12 +547,14 @@ void withdrawScreen()
     std::string accountNumber = readAccountNumber();
     withDrawMoneyFromAccount(accountNumber);
 }
+
 void printClientInfoFroTransaction(const stClientInfo &client)
 {
     std::cout << "| " << std::setw(15) << std::left << client.accountNumber
               << "| " << std::setw(40) << std::left << client.name
               << "| " << std::setw(12) << std::left << client.accountBalance;
 }
+
 void showTransactionList()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
@@ -562,26 +566,74 @@ void showTransactionList()
               << "| " << std::setw(12) << std::left << "Phone"
               << "| " << std::setw(12) << std::left << "Balance";
     std::cout << "\n____________________________________________________________________________________________________________________\n\n";
-    double total=0;
+    double total = 0;
     for (const stClientInfo &c : vClients)
     {
         printClientInfoFroTransaction(c);
         std::cout << std::endl;
-        total+=c.accountBalance;
+        total += c.accountBalance;
     }
     std::cout << "\n____________________________________________________________________________________________________________________\n";
-    std::cout <<"\t\t\t\t\t\tTotal Balance = "<<total<<std::endl;
+    std::cout << "\t\t\t\t\t\tTotal Balance = " << total << std::endl;
+}
+
+enum enTransactionMenu
+{
+    eDeposit = 1,
+    eWithdraw = 2,
+    eTotalBalance = 3,
+    eMainMenu = 4,
+};
+void goBackToTransactionMenu()
+{
+    std::cout << "Press any key to go back to main menu...";
+    std::string line;
+    std::getline(std::cin >> std::ws, line);
+    system("clear");
+    transactionMenu();
+}
+void performTransactionMenu(enTransactionMenu choose)
+{
+    switch (choose)
+    {
+    case enTransactionMenu::eDeposit:
+        system("clear");
+        depositScreen();
+        goBackToTransactionMenu();
+        break;
+    case enTransactionMenu::eWithdraw:
+        system("clear");
+        withdrawScreen();
+        goBackToTransactionMenu();
+        break;
+    case enTransactionMenu::eTotalBalance:
+        system("clear");
+        showTransactionList();
+        goBackToTransactionMenu();
+        break;
+    case enTransactionMenu::eMainMenu:
+        mainMenu();
+        break;
+    default:
+        break;
+    }
+}
+
+void transactionMenu()
+{
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t\t\t\t Transaction Menu Screen\n";
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t[1] Deposit.\n";
+    std::cout << "\t[2] Withdraw.\n";
+    std::cout << "\t[3] Total Balance.\n";
+    std::cout << "\t[4] Main Menu.\n";
+    std::cout << "=======================================================================================================\n";
+    performTransactionMenu((enTransactionMenu)readNumberBetween(1, 4));
 }
 
 int main()
 {
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    std::string accountNumber = readAccountNumber();
 
-    showTransactionList();
-    std::cout << "Press any key to go back to main menu...";
-    std::string line;
-    std::getline(std::cin >> std::ws, line);
-
-    mainMenu();
+    transactionMenu();
 }
