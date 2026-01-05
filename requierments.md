@@ -123,3 +123,108 @@ press any key to go back to Main Menu...
 --------------------------------------------------------
                 Program Ends :-)
 -------------------------------------------------------
+
+
+
+                        Bank extension
+
+===========================================================
+                    Main Menu Screen
+===========================================================
+        [1] Show Client List.
+        [2] Add NEw Client.
+        [3] Delete Client.
+        [4] Update Client.
+        [5] Find Client.
+        [6] TransAction
+        [7] Exit.
+===========================================================
+Choose What do you want to do? [1 to 6]?
+
+[6]
+===========================================================
+                    Transaction Menu Screen
+===========================================================
+        [1] Deposit/
+        [2] Withdraw.
+        [3] Total Balances.
+        [] Main Menu.
+===========================================================
+Choose What do you want to do? [1 to 4]?
+
+[1]
+
+---------------------------------------------------------
+                Deposit Screen
+---------------------------------------------------------
+
+Please Enter Account Number?--
+-client with [accountNumber] does not exist.
+-
+The following are the client details:
+-------------------------------------------------------
+Account Number :---
+Pin Code       :---
+Name           :---
+Phone          :---
+Account Balance:----
+--------------------------------------------------------
+
+Please enter deposit amount?---
+
+Are you sure you want perform this transaction? Y/N? -
+
+Done successfully the new balance is -----
+
+press any key to go back to Transaction Menu...
+
+
+[2]
+
+
+---------------------------------------------------------
+                Withdraw Screen
+---------------------------------------------------------
+
+Please Enter Account Number?--
+-client with [accountNumber] does not exist.
+-
+The following are the client details:
+-------------------------------------------------------
+Account Number :---
+Pin Code       :---
+Name           :---
+Phone          :---
+Account Balance:----
+--------------------------------------------------------
+
+Please enter withdraw amount?---
+(if the amount more than balance) 
+Amount Exceeds the balance, you can withdraw up to : the balance.
+please Enter another amount? 
+
+Are you sure you want perform this transaction? Y/N? -
+
+Done successfully the new balance is -----
+
+press any key to go back to Transaction Menu...
+
+
+
+[3]
+                    client list (6) Client(s).
+________________________________________________________________________
+| Account Number     | Client Name         | Balance
+________________________________________________________________________
+
+| A150               | Ahmad Hmedan        |10000 
+| A151               | Ail Ail             |12500
+| A152               | Clare Hildrid       |12500
+
+_______________________________________________________________________
+
+                                        Total Balances = 35000
+
+press any key to go back to Transaction Menu...
+
+my name is Ahmad Hmedan 

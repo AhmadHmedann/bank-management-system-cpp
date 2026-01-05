@@ -210,11 +210,13 @@ void addClientsScreen()
 void printClientCard(const stClientInfo &client)
 {
     std::cout << "The Following are the client details\n";
+    std::cout << "----------------------------------------------------------------\n";
     std::cout << "Account Number   : " << client.accountNumber
               << "\nPin Code       : " << client.PinCode
               << "\nName           : " << client.name
               << "\nPhone          : " << client.phone
               << "\nAccount Balance: " << client.accountBalance;
+    std::cout << "\n----------------------------------------------------------------\n";
 }
 
 bool saveClientsToFile(const std::string &fileName, const std::vector<stClientInfo> &vClients)
@@ -390,6 +392,7 @@ void mainMenu()
     std::cout << "====================================================================================================\n";
     performMainMenuOption((enMainMenuOption)readNumberBetween(1, 6));
 }
+
 void performMainMenuOption(enMainMenuOption option)
 {
     switch (option)
@@ -438,7 +441,48 @@ void performMainMenuOption(enMainMenuOption option)
         break;
     }
 }
+
+void depositMoneyInAccount(const std::string &accountNumber, std::vector<stClientInfo> &vClients)
+{
+    stClientInfo client;
+    if (findClientByAccountNumber(vClients, accountNumber, client))
+    {
+        int amount = 0;
+        printClientCard(client);
+        std::cout << "Please Enter Deposit Amount?";
+        std::cin >> amount;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Are you sure you want to perform this transaction? Y/N? ";
+        char confirm = 'Y';
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stClientInfo &C : vClients)
+            {
+                if (C.accountNumber == accountNumber)
+                {
+                    C.accountBalance += amount;
+                    std::cout << "Done successfully the new balance is" << C.accountBalance;
+                    break;
+                }
+            }
+            saveClientsToFile(fileName, vClients);
+        }
+    }
+    else
+    {
+        std::cout << "Client with [" << accountNumber << "] is not exist.";
+    }
+}
+
 int main()
 {
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::string accountNumber = readAccountNumber();
+
+    depositMoneyInAccount(accountNumber, vClients);
+    std::cout << "Press any key to go back to main menu...";
+    std::string line;
+    std::getline(std::cin >> std::ws, line);
     mainMenu();
 }

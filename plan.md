@@ -40,3 +40,5 @@ performMainMen function only to do the switch depend on the argument  which is t
 goBackToMainMenu function to clear the screen and show mainMenu
 mainMenu function show the fist screen and performMainMenu
 
+                Bank extension
+                 
