@@ -7,6 +7,8 @@
 
 void mainMenu();
 void transactionMenu();
+void transactionMenu();
+
 const std::string fileName = "HmedanBank.txt";
 struct stClientInfo
 {
@@ -25,8 +27,10 @@ enum enMainMenuOption
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eEndProgram = 6
+    eTransaction = 6,
+    eEndProgram = 7,
 };
+
 void performMainMenuOption(enMainMenuOption);
 
 std::vector<std::string> vSplit(std::string s, const std::string &delimiter)
@@ -120,6 +124,7 @@ bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const 
     }
     return false;
 }
+
 bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
 {
     for (const stClientInfo &c : vClients)
@@ -388,9 +393,10 @@ void mainMenu()
     std::cout << "\t[3] Delete Client.\n";
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
-    std::cout << "\t[6] Exit.\n";
+    std::cout << "\t[6] Transaction\n";
+    std::cout << "\t[7] Exit.\n";
     std::cout << "====================================================================================================\n";
-    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 6));
+    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
 }
 
 void performMainMenuOption(enMainMenuOption option)
@@ -437,6 +443,8 @@ void performMainMenuOption(enMainMenuOption option)
         endProgramScreen();
         break;
     }
+    case enMainMenuOption::eTransaction:
+    transactionMenu();
     default:
         break;
     }
@@ -584,6 +592,7 @@ enum enTransactionMenu
     eTotalBalance = 3,
     eMainMenu = 4,
 };
+
 void goBackToTransactionMenu()
 {
     std::cout << "Press any key to go back to main menu...";
@@ -592,6 +601,7 @@ void goBackToTransactionMenu()
     system("clear");
     transactionMenu();
 }
+
 void performTransactionMenu(enTransactionMenu choose)
 {
     switch (choose)
@@ -621,6 +631,7 @@ void performTransactionMenu(enTransactionMenu choose)
 
 void transactionMenu()
 {
+    system("clear");
     std::cout << "====================================================================================================\n";
     std::cout << "\t\t\t\t Transaction Menu Screen\n";
     std::cout << "====================================================================================================\n";
@@ -635,5 +646,5 @@ void transactionMenu()
 int main()
 {
 
-    transactionMenu();
+    mainMenu();
 }
