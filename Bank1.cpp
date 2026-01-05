@@ -442,9 +442,9 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
-int readPositiveNumber(std::string message)
+double readPositiveNumber(std::string message)
 {
-    int num;
+    double num;
     std::cout << message << std::endl;
     std::cin >> num;
 
@@ -528,14 +528,60 @@ void withDrawMoneyFromAccount(const std::string &accountNumber)
     }
 }
 
+void depositScreen()
+{
+    std::cout << "---------------------------------------------------------------\n";
+    std::cout << "\t\t\t\tDeposit Screen\n";
+    std::cout << "---------------------------------------------------------------\n";
+    std::string accountNumber = readAccountNumber();
+    depositMoneyInAccount(accountNumber);
+}
+
+void withdrawScreen()
+{
+    std::cout << "---------------------------------------------------------------\n";
+    std::cout << "\t\t\t\t Withdraw Screen\n";
+    std::cout << "---------------------------------------------------------------\n";
+    std::string accountNumber = readAccountNumber();
+    withDrawMoneyFromAccount(accountNumber);
+}
+void printClientInfoFroTransaction(const stClientInfo &client)
+{
+    std::cout << "| " << std::setw(15) << std::left << client.accountNumber
+              << "| " << std::setw(40) << std::left << client.name
+              << "| " << std::setw(12) << std::left << client.accountBalance;
+}
+void showTransactionList()
+{
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout << "| " << std::setw(15) << std::left << "Account Number"
+              << "| " << std::setw(10) << std::left << "Pin Code"
+              << "| " << std::setw(40) << std::left << "Client Name"
+              << "| " << std::setw(12) << std::left << "Phone"
+              << "| " << std::setw(12) << std::left << "Balance";
+    std::cout << "\n____________________________________________________________________________________________________________________\n\n";
+    double total=0;
+    for (const stClientInfo &c : vClients)
+    {
+        printClientInfoFroTransaction(c);
+        std::cout << std::endl;
+        total+=c.accountBalance;
+    }
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout <<"\t\t\t\t\t\tTotal Balance = "<<total<<std::endl;
+}
+
 int main()
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::string accountNumber = readAccountNumber();
 
-    withDrawMoneyFromAccount(accountNumber);
+    showTransactionList();
     std::cout << "Press any key to go back to main menu...";
     std::string line;
     std::getline(std::cin >> std::ws, line);
+
     mainMenu();
 }
