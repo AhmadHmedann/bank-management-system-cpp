@@ -442,16 +442,30 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
-void depositMoneyInAccount(const std::string &accountNumber, std::vector<stClientInfo> &vClients)
+int readPositiveNumber(std::string message)
 {
+    int num;
+    std::cout << message << std::endl;
+    std::cin >> num;
+
+    while (num < 0)
+    {
+        std::cout << "Enter Positive Number \n";
+        std::cin >> num;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return num;
+}
+void depositMoneyInAccount(const std::string &accountNumber)
+{
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     stClientInfo client;
     if (findClientByAccountNumber(vClients, accountNumber, client))
     {
-        int amount = 0;
+
         printClientCard(client);
-        std::cout << "Please Enter Deposit Amount?";
-        std::cin >> amount;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        int amount = readPositiveNumber("Please Enter Deposit Amount?");
         std::cout << "Are you sure you want to perform this transaction? Y/N? ";
         char confirm = 'Y';
         std::cin >> confirm;
@@ -462,7 +476,46 @@ void depositMoneyInAccount(const std::string &accountNumber, std::vector<stClien
                 if (C.accountNumber == accountNumber)
                 {
                     C.accountBalance += amount;
-                    std::cout << "Done successfully the new balance is" << C.accountBalance;
+                    std::cout << "Done successfully the new balance is" << C.accountBalance << std::endl;
+                    break;
+                }
+            }
+            saveClientsToFile(fileName, vClients);
+        }
+    }
+    else
+    {
+        std::cout << "Client with [" << accountNumber << "] is not exist.";
+    }
+}
+void withDrawMoneyFromAccount(const std::string &accountNumber)
+{
+
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    stClientInfo client;
+    if (findClientByAccountNumber(vClients, accountNumber, client))
+    {
+
+        printClientCard(client);
+
+        int amount = readPositiveNumber("Please Enter WithDraw Amount?");
+        while (amount > client.accountBalance)
+        {
+            std::cout << "Amount Exceeds the balance, you can withdraw up to: " << client.accountBalance << std::endl;
+            amount = readPositiveNumber("Please Enter another amount");
+        }
+
+        std::cout << "Are you sure you want to perform this transaction? Y/N? ";
+        char confirm = 'Y';
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stClientInfo &C : vClients)
+            {
+                if (C.accountNumber == accountNumber)
+                {
+                    C.accountBalance -= amount;
+                    std::cout << "Done successfully the new balance is" << C.accountBalance << std::endl;
                     break;
                 }
             }
@@ -480,7 +533,7 @@ int main()
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::string accountNumber = readAccountNumber();
 
-    depositMoneyInAccount(accountNumber, vClients);
+    withDrawMoneyFromAccount(accountNumber);
     std::cout << "Press any key to go back to main menu...";
     std::string line;
     std::getline(std::cin >> std::ws, line);
