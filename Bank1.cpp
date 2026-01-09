@@ -7,7 +7,7 @@
 
 void mainMenu();
 void transactionMenu();
-void transactionMenu();
+
 
 const std::string fileName = "HmedanBank.txt";
 struct stClientInfo
@@ -445,6 +445,7 @@ void performMainMenuOption(enMainMenuOption option)
     }
     case enMainMenuOption::eTransaction:
         transactionMenu();
+        break;
     default:
         break;
     }
@@ -498,7 +499,7 @@ void depositMoneyInAccount( std::string &accountNumber)
     }
 
     printClientCard(client);
-    int amount = readPositiveNumber("Please Enter Deposit Amount?");
+    double amount = readPositiveNumber("Please Enter Deposit Amount?");
     depositBalanceToClientByAccountNumber(accountNumber,amount,vClients);
 }
 
@@ -515,7 +516,7 @@ void withDrawMoneyFromAccount( std::string &accountNumber)
 
         printClientCard(client);
 
-        int amount = readPositiveNumber("Please Enter WithDraw Amount?");
+        double amount = readPositiveNumber("Please Enter WithDraw Amount?");
         while (amount > client.accountBalance)
         {
             std::cout << "Amount Exceeds the balance, you can withdraw up to: " << client.accountBalance << std::endl;
