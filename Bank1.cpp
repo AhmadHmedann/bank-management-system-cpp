@@ -497,7 +497,6 @@ bool checkUser(std::string username, std::string password)
 
     return false;
 }
-
 void loginScreen()
 {
 
@@ -507,7 +506,7 @@ void loginScreen()
         std::cout << "---------------------------------------------------------\n";
         std::cout << "                     Login Screen                        \n";
         std::cout << "---------------------------------------------------------\n";
-        if(!isValid)
+        if (!isValid)
         {
             std::cout << "invalid Username/Password!\n";
         }
@@ -518,7 +517,7 @@ void loginScreen()
         std::getline(std::cin, password);
         isValid = checkUser(username, password);
         // I must do trim for the inputs before checking
-        //also later I must refactor this function
+        // also later I must refactor this function
         if (isValid)
         {
             mainMenu();
@@ -526,12 +525,32 @@ void loginScreen()
         else
         {
             system("clear");
-
         }
     } while (!isValid);
 }
+
+void printUserCard(stUserInfo user)
+{
+    std::cout << "| " << std::setw(30) << std::left << user.userName << " | " << std::setw(15) << user.password << " | " << std::setw(5) << user.permissions << std::endl;
+}
+void userListScreen()
+{
+    std::vector<stUserInfo> vUser = loadUserFromFile(userFile);
+
+    std::cout << "                    Users List (" << vUser.size() << ") User(s)./n";
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
+
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    for (stUserInfo &user : vUser)
+    {
+        printUserCard(user);
+    }
+    std::cout << "\n\n____________________________________________________________________________________________________________________\n";
+    // goBackToManageUserMainMenu
+}
 int main()
 {
-    
-    loginScreen();
+    userListScreen();
+    // loginScreen();
 }
