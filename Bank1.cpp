@@ -442,47 +442,8 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
-void depositMoneyInAccount(const std::string &accountNumber, std::vector<stClientInfo> &vClients)
-{
-    stClientInfo client;
-    if (findClientByAccountNumber(vClients, accountNumber, client))
-    {
-        int amount = 0;
-        printClientCard(client);
-        std::cout << "Please Enter Deposit Amount?";
-        std::cin >> amount;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Are you sure you want to perform this transaction? Y/N? ";
-        char confirm = 'Y';
-        std::cin >> confirm;
-        if (tolower(confirm) == 'y')
-        {
-            for (stClientInfo &C : vClients)
-            {
-                if (C.accountNumber == accountNumber)
-                {
-                    C.accountBalance += amount;
-                    std::cout << "Done successfully the new balance is" << C.accountBalance;
-                    break;
-                }
-            }
-            saveClientsToFile(fileName, vClients);
-        }
-    }
-    else
-    {
-        std::cout << "Client with [" << accountNumber << "] is not exist.";
-    }
-}
-
 int main()
 {
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    std::string accountNumber = readAccountNumber();
-
-    depositMoneyInAccount(accountNumber, vClients);
-    std::cout << "Press any key to go back to main menu...";
-    std::string line;
-    std::getline(std::cin >> std::ws, line);
+  
     mainMenu();
 }
