@@ -8,6 +8,7 @@
 void mainMenu();
 
 const std::string fileName = "HmedanBank.txt";
+const std::string userFile = "Users.txt";
 struct stClientInfo
 {
     std::string accountNumber;
@@ -442,8 +443,94 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
+struct stUserInfo
+{
+    std::string userName;
+    std::string password;
+    int permissions;
+};
+stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
+{
+    stUserInfo user;
+    std::vector<std::string> vUserString = vSplit(line, separator);
+    user.userName = vUserString[0];
+    user.password = vUserString[1];
+    user.permissions = std::stoi(vUserString[2]);
+    return user;
+};
+std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
+{
+    std::vector<stUserInfo> vUsersInfo;
+    std::fstream myfile;
+    myfile.open(userFile, std::ios::in);
+    if (myfile.is_open())
+    {
+        std::string line;
+
+        while (getline(myfile, line))
+        {
+            stUserInfo user = convertLineUserToRecord(line);
+            vUsersInfo.push_back(user);
+        }
+        myfile.close();
+    }
+    return vUsersInfo;
+}
+// login screen function () {check two value username and password}
+//  function to check the value and return true or false if true go to main menu of false print invalid username/password! the ask to reenter the user name and password
+//  I need to convert line to record
+bool checkUser(std::string username, std::string password)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &user : vUsers)
+    {
+
+        if (user.userName == username)
+        {
+            if (user.password == password)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    return false;
+}
+
+void loginScreen()
+{
+
+    bool isValid = true;
+    do
+    {
+        std::cout << "---------------------------------------------------------\n";
+        std::cout << "                     Login Screen                        \n";
+        std::cout << "---------------------------------------------------------\n";
+        if(!isValid)
+        {
+            std::cout << "invalid Username/Password!\n";
+        }
+        std::string username, password;
+        std::cout << "Enter Username?   ";
+        std::getline(std::cin >> std::ws, username);
+        std::cout << "Enter Password?   ";
+        std::getline(std::cin, password);
+        isValid = checkUser(username, password);
+        // I must do trim for the inputs before checking
+        //also later I must refactor this function
+        if (isValid)
+        {
+            mainMenu();
+        }
+        else
+        {
+            system("clear");
+
+        }
+    } while (!isValid);
+}
 int main()
 {
-  
-    mainMenu();
+    loginScreen();
 }
