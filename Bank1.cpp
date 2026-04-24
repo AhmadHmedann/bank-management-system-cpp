@@ -652,10 +652,31 @@ void deleteUserByUsernameScreen()
         // mangeUserMenu
     }
 }
+
+void findUserScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Find User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+    if(findUser(username,user))
+    {
+        printUserCard(user);
+        //MangeUserMenu()
+    }else{
+        std::cout << "User with Username (" << username << ") is not found!\n";
+        //MangeUserMenu()
+    }
+}
 int main()
 {
+   
     userListScreen();
-    deleteUserByUsernameScreen();
-    userListScreen();
+    findUserScreen();
     // loginScreen();
 }
