@@ -6,7 +6,7 @@
 #include <limits>
 
 void mainMenu();
-
+void MangeUsersMenuScreen();
 const std::string fileName = "HmedanBank.txt";
 const std::string userFile = "Users.txt";
 struct stClientInfo
@@ -371,7 +371,7 @@ short readNumberBetween(short from, short to)
     short num;
     do
     {
-        std::cout << "Choose what do you want to do?  [1 to 6]?\n";
+        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
         std::cin >> num;
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     } while (num < from || num > to);
@@ -631,7 +631,7 @@ void deleteUserByUsernameScreen()
             {
                 if (U.userName == username)
                 {
-                   U.markToDelete = true;
+                    U.markToDelete = true;
                     break;
                 }
             }
@@ -664,19 +664,79 @@ void findUserScreen()
     std::cout << "--------------------------------------------------------------------\n\n";
     stUserInfo user;
     std::string username = ReadUsername();
-    if(findUser(username,user))
+    if (findUser(username, user))
     {
         printUserCard(user);
-        //MangeUserMenu()
-    }else{
+        // MangeUserMenu()
+    }
+    else
+    {
         std::cout << "User with Username (" << username << ") is not found!\n";
-        //MangeUserMenu()
+        // MangeUserMenu()
     }
 }
+enum enMangeUsersMenuOption
+{
+    eShowUserList = 1,
+    eAddNewUser = 2,
+    eDeleteUser = 3,
+    eUpdateUser = 4,
+    eFindUser = 5,
+    eMainMenu = 6
+};
+void GoBackToMangeUsersMenu()
+{
+    std::cout << "Press any key to go back to Mange Users Menu\n";
+    std::string s;
+    getline(std::cin >> std::ws, s);
+    MangeUsersMenuScreen();
+}
+
+void PerformMangeUsersMenu(enMangeUsersMenuOption option)
+{
+    switch (option)
+    {
+    case enMangeUsersMenuOption::eShowUserList:
+        system("clear");
+        userListScreen();
+        GoBackToMangeUsersMenu();
+        break;
+    case enMangeUsersMenuOption::eDeleteUser:
+        system("clear");
+        deleteUserByUsernameScreen();
+        GoBackToMangeUsersMenu();
+        break;
+    case enMangeUsersMenuOption::eFindUser:
+        system("clear");
+        findUserScreen();
+        GoBackToMangeUsersMenu();
+        break;
+    case enMangeUsersMenuOption::eMainMenu:
+
+        mainMenu();
+        break;
+    default:
+        break;
+    }
+}
+void MangeUsersMenuScreen()
+{
+    system("clear");
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t\t\t\tMange Users Menu Screen\n";
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t[1] Show USers List.\n";
+    std::cout << "\t[2] Add New User(s).\n";
+    std::cout << "\t[3] Delete User.\n";
+    std::cout << "\t[4] Update User.\n";
+    std::cout << "\t[5] Find User.\n";
+    std::cout << "\t[6] Main Menu.\n";
+    std::cout << "====================================================================================================\n";
+    PerformMangeUsersMenu((enMangeUsersMenuOption)readNumberBetween(1, 6));
+}
+
 int main()
 {
-   
-    userListScreen();
-    findUserScreen();
-    // loginScreen();
+
+    MangeUsersMenuScreen();
 }
