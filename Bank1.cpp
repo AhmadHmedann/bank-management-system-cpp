@@ -443,11 +443,19 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
+std::string ReadUsername()
+{
+    std::string s;
+    std::cout << "Please Enter username \n";
+    getline(std::cin, s);
+    return s;
+}
 struct stUserInfo
 {
     std::string userName;
     std::string password;
     int permissions;
+    bool markToDelete = false;
 };
 stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
 {
@@ -529,7 +537,7 @@ void loginScreen()
     } while (!isValid);
 }
 
-void printUserCard(stUserInfo user)
+void printUserInfo(stUserInfo user)
 {
     std::cout << "| " << std::setw(30) << std::left << user.userName << " | " << std::setw(15) << user.password << " | " << std::setw(5) << user.permissions << std::endl;
 }
@@ -544,13 +552,110 @@ void userListScreen()
     std::cout << "\n____________________________________________________________________________________________________________________\n";
     for (stUserInfo &user : vUser)
     {
-        printUserCard(user);
+        printUserInfo(user);
     }
     std::cout << "\n\n____________________________________________________________________________________________________________________\n";
     // goBackToManageUserMainMenu
 }
+
+// Delete User I need to add mark to delete on my struct and I need a function to print user card
+// Also I need to save this user to user file for that I need covert record to line function
+// and finduser
+// finally delete screen function
+void printUserCard(stUserInfo user)
+{
+    std::cout << "The Following are the user details\n";
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "User Name   : " << user.userName
+              << "\nPassword    : " << user.password
+              << "\nPermissions : " << user.permissions;
+    std::cout << "\n----------------------------------------------------------------\n";
+}
+std::string convertUserRecordToLine(stUserInfo user, std::string separator = "#//#")
+{
+    return user.userName + separator + user.password + separator + std::to_string(user.permissions);
+}
+bool saveUsersToFile(std::string userFile, std::vector<stUserInfo> &vUser)
+{
+    std::fstream myfile;
+    std::string line;
+    myfile.open(userFile, std::ios::out);
+    if (myfile.is_open())
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            if (!user.markToDelete)
+            {
+                myfile << convertUserRecordToLine(user) << std::endl;
+            }
+        }
+        myfile.close();
+        return true;
+    }
+    myfile.close();
+    return false;
+}
+bool findUser(std::string username, stUserInfo &user)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            user = u;
+            return true;
+        }
+    }
+    return false;
+}
+void deleteUserByUsernameScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Delete User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+        char confirm = 'n';
+        std::cout << "Are you sure you want delete this User? Y/N? ";
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stUserInfo &U : vUsers)
+            {
+                if (U.userName == username)
+                {
+                   U.markToDelete = true;
+                    break;
+                }
+            }
+            if (saveUsersToFile(userFile, vUsers))
+            {
+                std::cout << "User deleted successfully.\n";
+                // MangeMenu
+            }
+            else
+            {
+                std::cerr << "Error, Delete User goes wrong\n";
+            }
+        }
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+        // mangeUserMenu
+    }
+}
 int main()
 {
+    userListScreen();
+    deleteUserByUsernameScreen();
     userListScreen();
     // loginScreen();
 }
