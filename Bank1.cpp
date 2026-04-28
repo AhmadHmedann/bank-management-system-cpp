@@ -608,6 +608,18 @@ bool findUser(std::string username, stUserInfo &user)
     }
     return false;
 }
+bool findUser(const std::string username)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 void deleteUserByUsernameScreen()
 {
 
@@ -692,6 +704,118 @@ void GoBackToMangeUsersMenu()
     MangeUsersMenuScreen();
 }
 
+// Add Users Screen I need a add user function
+// add user I need to set username password and permissions
+// function to add this user to user file
+//  so I Will declare a function called setPermissions and I will depend on enum and binary logic to solve that
+enum enMainMenuPermissions
+{
+    eAll = -1,
+    pShowClientList = 1,
+    pAddClientScreen = 2,
+    pDeleteClient = 4,
+    pUpdateClient = 8,
+    pFindClient = 16,
+    pMangaUser = 32,
+};
+
+int setUserPermissions()
+{
+    int permissions = 0;
+    char answer = 'y';
+    std::cout << "Do you want to give full access? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        return enMainMenuPermissions::eAll;
+    }
+    std::cout << "Do you want to give access to : \n";
+    std::cout << "Show Client List? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pShowClientList;
+    }
+    std::cout << "Add new Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pAddClientScreen;
+    }
+    std::cout << "Delete Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pDeleteClient;
+    }
+    std::cout << "Update Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pUpdateClient;
+    }
+    std::cout << "find Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pFindClient;
+    }
+    std::cout << "Manga User Menu? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pMangaUser;
+    }
+    return permissions;
+}
+stUserInfo ReadUserInfo(const std::vector<stUserInfo> &vUsers)
+{
+    stUserInfo user;
+
+    user.userName = ReadUsername();
+    while (findUser(user.userName))
+    {
+        std::cout << "User with [" << user.userName << "] is already exists, Enter another user name? ";
+        std::cin >> user.userName;
+    }
+    std::cout << "Enter Password?   ";
+    std::getline(std::cin, user.password);
+    user.permissions = setUserPermissions();
+    return user;
+}
+bool AddUserToFile(const std::string &userFile, std::vector<stUserInfo> &vUsers, stUserInfo user)
+{
+
+    vUsers.push_back(user);
+    std::fstream myfile;
+    myfile.open(userFile, std::ios::app | std::ios::out);
+    if (myfile.is_open())
+    {
+        myfile << convertUserRecordToLine(user)<<std::endl;
+        myfile.close();
+        return true;
+    }
+    myfile.close();
+    return false;
+}
+void AddUsersScreen()
+{
+    std::vector<stUserInfo> vUsers;
+    char addMore = 'y';
+    do
+    {
+        std::cout
+            << "--------------------------------------------------------------------\n";
+        std::cout << "\t\t\t Add User Screen\n";
+        std::cout << "--------------------------------------------------------------------\n\n";
+        stUserInfo user = ReadUserInfo(vUsers);
+        AddUserToFile(userFile, vUsers, user);
+        std::cout<<"Do you want to add more Users? Y/N?";
+        std::cin>>addMore;
+
+    } while (tolower(addMore) == 'y');
+}
+
 void PerformMangeUsersMenu(enMangeUsersMenuOption option)
 {
     switch (option)
@@ -704,6 +828,11 @@ void PerformMangeUsersMenu(enMangeUsersMenuOption option)
     case enMangeUsersMenuOption::eDeleteUser:
         system("clear");
         deleteUserByUsernameScreen();
+        GoBackToMangeUsersMenu();
+        break;
+    case enMangeUsersMenuOption::eAddNewUser:
+        system("clear");
+        AddUsersScreen();
         GoBackToMangeUsersMenu();
         break;
     case enMangeUsersMenuOption::eFindUser:
@@ -737,6 +866,5 @@ void MangeUsersMenuScreen()
 
 int main()
 {
-
     MangeUsersMenuScreen();
 }
