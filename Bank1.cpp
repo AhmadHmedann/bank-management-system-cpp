@@ -7,6 +7,8 @@
 
 void mainMenu();
 void MangeUsersMenuScreen();
+void DeniedScreen();
+void loginScreen();
 const std::string fileName = "HmedanBank.txt";
 const std::string userFile = "Users.txt";
 struct stClientInfo
@@ -18,7 +20,14 @@ struct stClientInfo
     double accountBalance = 0;
     bool markToDelete = false;
 };
-
+struct stUserInfo
+{
+    std::string userName;
+    std::string password;
+    int permissions;
+    bool markToDelete = false;
+};
+stUserInfo currentUser;
 enum enMainMenuOption
 {
     eShowClientList = 1,
@@ -26,11 +35,21 @@ enum enMainMenuOption
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eManageUserMenu=6,
+    eManageUserMenu = 6,
     eEndProgram = 7,
 };
+enum enMainMenuPermissions
+{
+    eAll = -1,
+    pShowClientList = 1,
+    pAddClientScreen = 2,
+    pDeleteClient = 4,
+    pUpdateClient = 8,
+    pFindClient = 16,
+    pMangaUser = 32,
+};
 void performMainMenuOption(enMainMenuOption);
-
+bool checkAccesspermission(enMainMenuPermissions);
 std::vector<std::string> vSplit(std::string s, const std::string &delimiter)
 {
     std::vector<std::string> vString;
@@ -93,6 +112,11 @@ void printClientInfo(const stClientInfo &client)
 // 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 void showClientsListScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pShowClientList))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
     std::cout << "\n____________________________________________________________________________________________________________________\n";
@@ -189,6 +213,11 @@ bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClient
 // 2222222222222222222222222222222222222222222222222
 void addClientsScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pAddClientScreen))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "-------------------------------------------------------------------------------\n";
     std::cout << "\t\t\t\tAdd New Client\n";
@@ -243,6 +272,11 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
 // 333333333333333333333333333333333333333
 void deleteClientByAccountNumberScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pDeleteClient))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout
         << "--------------------------------------------------------------------\n";
@@ -297,6 +331,11 @@ void updateClientInfo(stClientInfo &client)
 // 4444444444444444444444444444444
 void updateClientInfoByAccountNumberScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pUpdateClient))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Update Client Info Screen\n";
@@ -333,6 +372,11 @@ void updateClientInfoByAccountNumberScreen()
 // 5555555
 void findClientScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pFindClient))
+    {
+        DeniedScreen();
+        return;
+    }
     const std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout
         << "---------------------------------------------------------------------------\n";
@@ -437,12 +481,13 @@ void performMainMenuOption(enMainMenuOption option)
     case enMainMenuOption::eManageUserMenu:
     {
         MangeUsersMenuScreen();
+        goBackToMainMenu();
         break;
     }
     case enMainMenuOption::eEndProgram:
     {
         system("clear");
-        endProgramScreen();
+        loginScreen();
         break;
     }
     default:
@@ -457,13 +502,7 @@ std::string ReadUsername()
     getline(std::cin >> std::ws, s);
     return s;
 }
-struct stUserInfo
-{
-    std::string userName;
-    std::string password;
-    int permissions;
-    bool markToDelete = false;
-};
+
 stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
 {
     stUserInfo user;
@@ -494,7 +533,8 @@ std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
 // login screen function () {check two value username and password}
 //  function to check the value and return true or false if true go to main menu of false print invalid username/password! the ask to reenter the user name and password
 //  I need to convert line to record
-bool checkUser(std::string username, std::string password)
+
+bool checkUser(std::string username, std::string password, stUserInfo &User)
 {
     std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
     for (stUserInfo &user : vUsers)
@@ -504,6 +544,7 @@ bool checkUser(std::string username, std::string password)
         {
             if (user.password == password)
             {
+                User = user;
                 return true;
             }
             return false;
@@ -530,7 +571,7 @@ void loginScreen()
         std::getline(std::cin >> std::ws, username);
         std::cout << "Enter Password?   ";
         std::getline(std::cin, password);
-        isValid = checkUser(username, password);
+        isValid = checkUser(username, password, currentUser);
         // I must do trim for the inputs before checking
         // also later I must refactor this function
         if (isValid)
@@ -715,16 +756,6 @@ void GoBackToMangeUsersMenu()
 // add user I need to set username password and permissions
 // function to add this user to user file
 //  so I Will declare a function called setPermissions and I will depend on enum and binary logic to solve that
-enum enMainMenuPermissions
-{
-    eAll = -1,
-    pShowClientList = 1,
-    pAddClientScreen = 2,
-    pDeleteClient = 4,
-    pUpdateClient = 8,
-    pFindClient = 16,
-    pMangaUser = 32,
-};
 
 int setUserPermissions()
 {
@@ -916,8 +947,14 @@ void PerformMangeUsersMenu(enMangeUsersMenuOption option)
         break;
     }
 }
+//666666666666666666666666666666666666666666666
 void MangeUsersMenuScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pMangaUser))
+    {
+        DeniedScreen();
+        return;
+    }
     system("clear");
     std::cout << "====================================================================================================\n";
     std::cout << "\t\t\t\tMange Users Menu Screen\n";
@@ -932,6 +969,33 @@ void MangeUsersMenuScreen()
     PerformMangeUsersMenu((enMangeUsersMenuOption)readNumberBetween(1, 6));
 }
 
+// permissions: I need a denied screen(with back to main menu ... ) and I need function to check permissions the input fot that function should be enum based on what screen user choose
+//  and the output will be true if he allowed or false if he don't have a permission fot that choose
+bool checkAccesspermission(enMainMenuPermissions permission)
+{
+    if (permission == enMainMenuPermissions::eAll)
+    {
+        return true;
+    }
+    else if ((permission & currentUser.permissions) == permission)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void DeniedScreen()
+{
+    system("clear");
+    std::cout << "------------------------------------------------------------\n";
+    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease Conact With Your Admin.\n";
+    std::cout << "------------------------------------------------------------\n";
+}
+
+//something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
 int main()
 {
     loginScreen();
