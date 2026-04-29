@@ -26,7 +26,8 @@ enum enMainMenuOption
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eEndProgram = 6
+    eManageUserMenu=6,
+    eEndProgram = 7,
 };
 void performMainMenuOption(enMainMenuOption);
 
@@ -389,9 +390,10 @@ void mainMenu()
     std::cout << "\t[3] Delete Client.\n";
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
-    std::cout << "\t[6] Exit.\n";
+    std::cout << "\t[6] Manga Users Menu.\n";
+    std::cout << "\t[7] Exit.\n";
     std::cout << "====================================================================================================\n";
-    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 6));
+    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
 }
 
 void performMainMenuOption(enMainMenuOption option)
@@ -432,6 +434,11 @@ void performMainMenuOption(enMainMenuOption option)
         goBackToMainMenu();
         break;
     }
+    case enMainMenuOption::eManageUserMenu:
+    {
+        MangeUsersMenuScreen();
+        break;
+    }
     case enMainMenuOption::eEndProgram:
     {
         system("clear");
@@ -447,7 +454,7 @@ std::string ReadUsername()
 {
     std::string s;
     std::cout << "Please Enter username \n";
-    getline(std::cin>>std::ws, s);
+    getline(std::cin >> std::ws, s);
     return s;
 }
 struct stUserInfo
@@ -791,7 +798,7 @@ bool AddUserToFile(const std::string &userFile, std::vector<stUserInfo> &vUsers,
     myfile.open(userFile, std::ios::app | std::ios::out);
     if (myfile.is_open())
     {
-        myfile << convertUserRecordToLine(user)<<std::endl;
+        myfile << convertUserRecordToLine(user) << std::endl;
         myfile.close();
         return true;
     }
@@ -810,8 +817,8 @@ void AddUsersScreen()
         std::cout << "--------------------------------------------------------------------\n\n";
         stUserInfo user = ReadUserInfo(vUsers);
         AddUserToFile(userFile, vUsers, user);
-        std::cout<<"Do you want to add more Users? Y/N?";
-        std::cin>>addMore;
+        std::cout << "Do you want to add more Users? Y/N?";
+        std::cin >> addMore;
 
     } while (tolower(addMore) == 'y');
 }
@@ -927,5 +934,5 @@ void MangeUsersMenuScreen()
 
 int main()
 {
-    MangeUsersMenuScreen();
+    loginScreen();
 }
