@@ -447,7 +447,7 @@ std::string ReadUsername()
 {
     std::string s;
     std::cout << "Please Enter username \n";
-    getline(std::cin, s);
+    getline(std::cin>>std::ws, s);
     return s;
 }
 struct stUserInfo
@@ -816,6 +816,62 @@ void AddUsersScreen()
     } while (tolower(addMore) == 'y');
 }
 
+// Update user screen I need save to file (iso::out), print user card and find user  I have them already and I need to update user info i must have vUsers with ref
+stUserInfo UpdateUserInfo(std::string username)
+{
+    stUserInfo user;
+    user.userName = username;
+    std::cout << "Enter Password?   ";
+    std::getline(std::cin, user.password);
+    user.permissions = setUserPermissions();
+    return user;
+}
+
+void UpdateUserScreen()
+{
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t update User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    std::string username = ReadUsername();
+    stUserInfo user;
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+        char confirm = 'n';
+        std::cout << "Are you sure you want update this User? Y/N? ";
+        std::cin >> confirm;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        if (tolower(confirm) == 'y')
+        {
+            for (stUserInfo &u : vUsers)
+            {
+                if (u.userName == username)
+                {
+                    u = UpdateUserInfo(username);
+                    break;
+                }
+            }
+            if (saveUsersToFile(userFile, vUsers))
+            {
+
+                std::cout << "User updated successfully.\n";
+            }
+            else
+            {
+                std::cerr << "Error, update User goes wrong\n";
+            }
+        }
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+    }
+}
+
 void PerformMangeUsersMenu(enMangeUsersMenuOption option)
 {
     switch (option)
@@ -838,6 +894,11 @@ void PerformMangeUsersMenu(enMangeUsersMenuOption option)
     case enMangeUsersMenuOption::eFindUser:
         system("clear");
         findUserScreen();
+        GoBackToMangeUsersMenu();
+        break;
+    case enMangeUsersMenuOption::eUpdateUser:
+        system("clear");
+        UpdateUserScreen();
         GoBackToMangeUsersMenu();
         break;
     case enMangeUsersMenuOption::eMainMenu:
