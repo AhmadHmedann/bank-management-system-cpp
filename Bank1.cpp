@@ -6,7 +6,7 @@
 #include <limits>
 
 void mainMenu();
-void MangeUsersMenuScreen();
+void ManageUsersMenuScreen();
 void DeniedScreen();
 void loginScreen();
 const std::string fileName = "HmedanBank.txt";
@@ -75,6 +75,10 @@ stClientInfo convertLineToRecord(const std::string &line, const std::string &sep
 {
     std::vector<std::string> vString = vSplit(line, separator);
     stClientInfo client;
+    if (vString.size() != 5)
+    {
+        throw std::runtime_error("Invalid client record");
+    }
     client.accountNumber = vString[0];
     client.PinCode = vString[1];
     client.name = vString[2];
@@ -118,7 +122,7 @@ void showClientsListScreen()
         return;
     }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
+    std::cout << "\t\t\t\t\tClient List (" << vClients.size() << ") Client (s).\n";
     std::cout << "\n____________________________________________________________________________________________________________________\n";
     std::cout << "| " << std::setw(15) << std::left << "Account Number"
               << "| " << std::setw(10) << std::left << "Pin Code"
@@ -228,7 +232,7 @@ void addClientsScreen()
         std::cout << "Adding New Client:\n";
         if (addClient(fileName, vClients))
         {
-            std::cout << "Client Added Successfully, do you want to add more clients? Y/N?";
+            std::cout << "\nClient Added Successfully, do you want to add more clients? Y/N?";
             std::cin >> addMore;
         }
         else
@@ -403,7 +407,7 @@ void endProgramScreen()
 
 void goBackToMainMenu()
 {
-    std::cout << "Press any key to go back to main menu...";
+    std::cout << "\n\nPress any key to go back to main menu...";
     std::string line;
     std::getline(std::cin >> std::ws, line);
     system("clear");
@@ -435,7 +439,7 @@ void mainMenu()
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
     std::cout << "\t[6] Manga Users Menu.\n";
-    std::cout << "\t[7] Exit.\n";
+    std::cout << "\t[7] Logout.\n";
     std::cout << "====================================================================================================\n";
     performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
 }
@@ -480,8 +484,9 @@ void performMainMenuOption(enMainMenuOption option)
     }
     case enMainMenuOption::eManageUserMenu:
     {
-        MangeUsersMenuScreen();
-        goBackToMainMenu();
+        ManageUsersMenuScreen();
+        goBackToMainMenu(); // if I delete that and no permission fo manage user I think it will end the program
+        // if I added go back to main menu screen in Denied screen that will effect the call stack I will do debug later for both  cases
         break;
     }
     case enMainMenuOption::eEndProgram:
@@ -507,6 +512,10 @@ stUserInfo convertLineUserToRecord(const std::string &line, std::string separato
 {
     stUserInfo user;
     std::vector<std::string> vUserString = vSplit(line, separator);
+    if (vUserString.size() != 3)
+    {
+        throw std::runtime_error("Invalid user record");
+    }
     user.userName = vUserString[0];
     user.password = vUserString[1];
     user.permissions = std::stoi(vUserString[2]);
@@ -520,10 +529,10 @@ std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
     if (myfile.is_open())
     {
         std::string line;
-
+        stUserInfo user;
         while (getline(myfile, line))
         {
-            stUserInfo user = convertLineUserToRecord(line);
+            user = convertLineUserToRecord(line);
             vUsersInfo.push_back(user);
         }
         myfile.close();
@@ -557,8 +566,10 @@ void loginScreen()
 {
 
     bool isValid = true;
+    std::string username, password;
     do
     {
+        system("clear");
         std::cout << "---------------------------------------------------------\n";
         std::cout << "                     Login Screen                        \n";
         std::cout << "---------------------------------------------------------\n";
@@ -566,7 +577,7 @@ void loginScreen()
         {
             std::cout << "invalid Username/Password!\n";
         }
-        std::string username, password;
+
         std::cout << "Enter Username?   ";
         std::getline(std::cin >> std::ws, username);
         std::cout << "Enter Password?   ";
@@ -574,15 +585,8 @@ void loginScreen()
         isValid = checkUser(username, password, currentUser);
         // I must do trim for the inputs before checking
         // also later I must refactor this function
-        if (isValid)
-        {
-            mainMenu();
-        }
-        else
-        {
-            system("clear");
-        }
     } while (!isValid);
+    mainMenu();
 }
 
 void printUserInfo(stUserInfo user)
@@ -598,12 +602,18 @@ void userListScreen()
     std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
 
     std::cout << "\n____________________________________________________________________________________________________________________\n";
-    for (stUserInfo &user : vUser)
+    if (vUser.size() == 0)
     {
-        printUserInfo(user);
+        std::cout << "\t\t\t No Users Available In The System!";
     }
-    std::cout << "\n\n____________________________________________________________________________________________________________________\n";
-    // goBackToManageUserMainMenu
+    else
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            printUserInfo(user);
+        }
+        std::cout << "\n\n____________________________________________________________________________________________________________________\n";
+    }
 }
 
 // Delete User I need to add mark to delete on my struct and I need a function to print user card
@@ -679,6 +689,12 @@ void deleteUserByUsernameScreen()
     std::cout << "--------------------------------------------------------------------\n\n";
     stUserInfo user;
     std::string username = ReadUsername();
+
+    if (username == "Admin" || (username == currentUser.userName))
+    {
+        std::cout << "\n\nYou cannot Delete This User.";
+        return;
+    }
     if (findUser(username, user))
     {
         printUserCard(user);
@@ -698,7 +714,6 @@ void deleteUserByUsernameScreen()
             if (saveUsersToFile(userFile, vUsers))
             {
                 std::cout << "User deleted successfully.\n";
-                // MangeMenu
             }
             else
             {
@@ -709,7 +724,6 @@ void deleteUserByUsernameScreen()
     else
     {
         std::cout << "User with Username (" << username << ") is not found!\n";
-        // mangeUserMenu
     }
 }
 
@@ -727,15 +741,13 @@ void findUserScreen()
     if (findUser(username, user))
     {
         printUserCard(user);
-        // MangeUserMenu()
     }
     else
     {
         std::cout << "User with Username (" << username << ") is not found!\n";
-        // MangeUserMenu()
     }
 }
-enum enMangeUsersMenuOption
+enum enManageUsersMenuOption
 {
     eShowUserList = 1,
     eAddNewUser = 2,
@@ -744,12 +756,12 @@ enum enMangeUsersMenuOption
     eFindUser = 5,
     eMainMenu = 6
 };
-void GoBackToMangeUsersMenu()
+void GoBackToManageUsersMenu()
 {
-    std::cout << "Press any key to go back to Mange Users Menu\n";
+    std::cout << "\n\nPress any key to go back to Manage Users Menu...\n";
     std::string s;
     getline(std::cin >> std::ws, s);
-    MangeUsersMenuScreen();
+    ManageUsersMenuScreen();
 }
 
 // Add Users Screen I need a add user function
@@ -760,14 +772,15 @@ void GoBackToMangeUsersMenu()
 int setUserPermissions()
 {
     int permissions = 0;
-    char answer = 'y';
+    char answer = 'n';
     std::cout << "Do you want to give full access? Y/N? ";
     std::cin >> answer;
     if (tolower(answer) == 'y')
     {
         return enMainMenuPermissions::eAll;
     }
-    std::cout << "Do you want to give access to : \n";
+    std::cout << "\nDo you want to give access to : \n";
+
     std::cout << "Show Client List? Y/N? ";
     std::cin >> answer;
     if (tolower(answer) == 'y')
@@ -848,7 +861,7 @@ void AddUsersScreen()
         std::cout << "--------------------------------------------------------------------\n\n";
         stUserInfo user = ReadUserInfo(vUsers);
         AddUserToFile(userFile, vUsers, user);
-        std::cout << "Do you want to add more Users? Y/N?";
+        std::cout << "\nDo you want to add more Users? Y/N?";
         std::cin >> addMore;
 
     } while (tolower(addMore) == 'y');
@@ -876,6 +889,11 @@ void UpdateUserScreen()
     std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
     std::string username = ReadUsername();
     stUserInfo user;
+    if (username == "Admin" || (username == currentUser.userName))
+    {
+        std::cout << "\n\nYou cannot Update This User.";
+        return;
+    }
     if (findUser(username, user))
     {
         printUserCard(user);
@@ -910,36 +928,36 @@ void UpdateUserScreen()
     }
 }
 
-void PerformMangeUsersMenu(enMangeUsersMenuOption option)
+void PerformManageUsersMenu(enManageUsersMenuOption option)
 {
     switch (option)
     {
-    case enMangeUsersMenuOption::eShowUserList:
+    case enManageUsersMenuOption::eShowUserList:
         system("clear");
         userListScreen();
-        GoBackToMangeUsersMenu();
+        GoBackToManageUsersMenu();
         break;
-    case enMangeUsersMenuOption::eDeleteUser:
+    case enManageUsersMenuOption::eDeleteUser:
         system("clear");
         deleteUserByUsernameScreen();
-        GoBackToMangeUsersMenu();
+        GoBackToManageUsersMenu();
         break;
-    case enMangeUsersMenuOption::eAddNewUser:
+    case enManageUsersMenuOption::eAddNewUser:
         system("clear");
         AddUsersScreen();
-        GoBackToMangeUsersMenu();
+        GoBackToManageUsersMenu();
         break;
-    case enMangeUsersMenuOption::eFindUser:
+    case enManageUsersMenuOption::eFindUser:
         system("clear");
         findUserScreen();
-        GoBackToMangeUsersMenu();
+        GoBackToManageUsersMenu();
         break;
-    case enMangeUsersMenuOption::eUpdateUser:
+    case enManageUsersMenuOption::eUpdateUser:
         system("clear");
         UpdateUserScreen();
-        GoBackToMangeUsersMenu();
+        GoBackToManageUsersMenu();
         break;
-    case enMangeUsersMenuOption::eMainMenu:
+    case enManageUsersMenuOption::eMainMenu:
 
         mainMenu();
         break;
@@ -947,33 +965,34 @@ void PerformMangeUsersMenu(enMangeUsersMenuOption option)
         break;
     }
 }
-//666666666666666666666666666666666666666666666
-void MangeUsersMenuScreen()
+// 666666666666666666666666666666666666666666666
+void ManageUsersMenuScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pMangaUser))
     {
         DeniedScreen();
+        // here add go back to main menu
         return;
     }
     system("clear");
     std::cout << "====================================================================================================\n";
-    std::cout << "\t\t\t\tMange Users Menu Screen\n";
+    std::cout << "\t\t\t\tManage Users Menu Screen\n";
     std::cout << "====================================================================================================\n";
-    std::cout << "\t[1] Show USers List.\n";
+    std::cout << "\t[1] Show Users List.\n";
     std::cout << "\t[2] Add New User(s).\n";
     std::cout << "\t[3] Delete User.\n";
     std::cout << "\t[4] Update User.\n";
     std::cout << "\t[5] Find User.\n";
     std::cout << "\t[6] Main Menu.\n";
     std::cout << "====================================================================================================\n";
-    PerformMangeUsersMenu((enMangeUsersMenuOption)readNumberBetween(1, 6));
+    PerformManageUsersMenu((enManageUsersMenuOption)readNumberBetween(1, 6));
 }
 
 // permissions: I need a denied screen(with back to main menu ... ) and I need function to check permissions the input fot that function should be enum based on what screen user choose
 //  and the output will be true if he allowed or false if he don't have a permission fot that choose
 bool checkAccesspermission(enMainMenuPermissions permission)
 {
-    if (permission == enMainMenuPermissions::eAll)
+    if (currentUser.permissions == enMainMenuPermissions::eAll)
     {
         return true;
     }
@@ -991,11 +1010,11 @@ void DeniedScreen()
 {
     system("clear");
     std::cout << "------------------------------------------------------------\n";
-    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease Conact With Your Admin.\n";
+    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease contact With Your Admin.\n";
     std::cout << "------------------------------------------------------------\n";
 }
 
-//something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
+// something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
 int main()
 {
     loginScreen();
