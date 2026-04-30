@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <fstream>
 #include <limits>
+#include <stdexcept>
+#include <cctype>
+#include <cstdlib>
 
 void mainMenu();
 void ManageUsersMenuScreen();
@@ -46,7 +49,7 @@ enum enMainMenuPermissions
     pDeleteClient = 4,
     pUpdateClient = 8,
     pFindClient = 16,
-    pMangaUser = 32,
+    pManageUser = 32,
 };
 void performMainMenuOption(enMainMenuOption);
 bool checkAccesspermission(enMainMenuPermissions);
@@ -83,7 +86,7 @@ stClientInfo convertLineToRecord(const std::string &line, const std::string &sep
     client.PinCode = vString[1];
     client.name = vString[2];
     client.phone = vString[3];
-    client.accountBalance = stod(vString[4]);
+    client.accountBalance = std::stod(vString[4]);
     return client;
 }
 
@@ -438,7 +441,7 @@ void mainMenu()
     std::cout << "\t[3] Delete Client.\n";
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
-    std::cout << "\t[6] Manga Users Menu.\n";
+    std::cout << "\t[6] Manage Users Menu.\n";
     std::cout << "\t[7] Logout.\n";
     std::cout << "====================================================================================================\n";
     performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
@@ -597,7 +600,7 @@ void userListScreen()
 {
     std::vector<stUserInfo> vUser = loadUserFromFile(userFile);
 
-    std::cout << "                    Users List (" << vUser.size() << ") User(s)./n";
+    std::cout << "                    Users List (" << vUser.size() << ") User(s).\n";
     std::cout << "\n____________________________________________________________________________________________________________________\n";
     std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
 
@@ -811,15 +814,15 @@ int setUserPermissions()
     {
         permissions += enMainMenuPermissions::pFindClient;
     }
-    std::cout << "Manga User Menu? Y/N? ";
+    std::cout << "Manage User Menu? Y/N? ";
     std::cin >> answer;
     if (tolower(answer) == 'y')
     {
-        permissions += enMainMenuPermissions::pMangaUser;
+        permissions += enMainMenuPermissions::pManageUser;
     }
     return permissions;
 }
-stUserInfo ReadUserInfo(const std::vector<stUserInfo> &vUsers)
+stUserInfo ReadUserInfo()
 {
     stUserInfo user;
 
@@ -830,7 +833,7 @@ stUserInfo ReadUserInfo(const std::vector<stUserInfo> &vUsers)
         std::cin >> user.userName;
     }
     std::cout << "Enter Password?   ";
-    std::getline(std::cin, user.password);
+    std::getline(std::cin>> std::ws, user.password);
     user.permissions = setUserPermissions();
     return user;
 }
@@ -851,7 +854,7 @@ bool AddUserToFile(const std::string &userFile, std::vector<stUserInfo> &vUsers,
 }
 void AddUsersScreen()
 {
-    std::vector<stUserInfo> vUsers;
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
     char addMore = 'y';
     do
     {
@@ -859,7 +862,7 @@ void AddUsersScreen()
             << "--------------------------------------------------------------------\n";
         std::cout << "\t\t\t Add User Screen\n";
         std::cout << "--------------------------------------------------------------------\n\n";
-        stUserInfo user = ReadUserInfo(vUsers);
+        stUserInfo user = ReadUserInfo();
         AddUserToFile(userFile, vUsers, user);
         std::cout << "\nDo you want to add more Users? Y/N?";
         std::cin >> addMore;
@@ -968,7 +971,7 @@ void PerformManageUsersMenu(enManageUsersMenuOption option)
 // 666666666666666666666666666666666666666666666
 void ManageUsersMenuScreen()
 {
-    if (!checkAccesspermission(enMainMenuPermissions::pMangaUser))
+    if (!checkAccesspermission(enMainMenuPermissions::pManageUser))
     {
         DeniedScreen();
         // here add go back to main menu
