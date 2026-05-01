@@ -8,10 +8,7 @@
 #include <cctype>
 #include <cstdlib>
 
-void mainMenu();
-void ManageUsersMenuScreen();
-void DeniedScreen();
-void loginScreen();
+
 const std::string fileName = "HmedanBank.txt";
 const std::string userFile = "Users.txt";
 struct stClientInfo
@@ -30,6 +27,7 @@ struct stUserInfo
     int permissions;
     bool markToDelete = false;
 };
+
 stUserInfo currentUser;
 enum enMainMenuOption
 {
@@ -51,8 +49,74 @@ enum enMainMenuPermissions
     pFindClient = 16,
     pManageUser = 32,
 };
+enum enManageUsersMenuOption
+{
+    eShowUserList = 1,
+    eAddNewUser = 2,
+    eDeleteUser = 3,
+    eUpdateUser = 4,
+    eFindUser = 5,
+    eMainMenu = 6
+};
+
+void mainMenu();
+void ManageUsersMenuScreen();
+void DeniedScreen();
+void loginScreen();
 void performMainMenuOption(enMainMenuOption);
 bool checkAccesspermission(enMainMenuPermissions);
+
+short readNumberBetween(short from, short to)
+
+{
+    short num;
+    do
+    {
+        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
+        std::cin >> num;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    } while (num < from || num > to);
+    return num;
+}
+std::string readAccountNumber()
+{
+    std::string s;
+    std::cout << "Please Enter Account Number \n";
+    getline(std::cin, s);
+    return s;
+}
+std::string ReadUsername()
+{
+    std::string s;
+    std::cout << "Please Enter username \n";
+    getline(std::cin >> std::ws, s);
+    return s;
+}
+
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber, stClientInfo &client)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            client = c;
+            return true;
+        }
+    }
+    return false;
+}
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::vector<std::string> vSplit(std::string s, const std::string &delimiter)
 {
     std::vector<std::string> vString;
@@ -89,7 +153,27 @@ stClientInfo convertLineToRecord(const std::string &line, const std::string &sep
     client.accountBalance = std::stod(vString[4]);
     return client;
 }
-
+stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
+{
+    stUserInfo user;
+    std::vector<std::string> vUserString = vSplit(line, separator);
+    if (vUserString.size() != 3)
+    {
+        throw std::runtime_error("Invalid user record");
+    }
+    user.userName = vUserString[0];
+    user.password = vUserString[1];
+    user.permissions = std::stoi(vUserString[2]);
+    return user;
+};
+std::string convertRecordToLine(const stClientInfo &client, const std::string &separator = "#//#")
+{
+    return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
+}
+std::string convertUserRecordToLine(stUserInfo user, std::string separator = "#//#")
+{
+    return user.userName + separator + user.password + separator + std::to_string(user.permissions);
+}
 std::vector<stClientInfo> loadClientsFromFile(const std::string &fileName)
 {
     std::vector<stClientInfo> vClients;
@@ -107,6 +191,45 @@ std::vector<stClientInfo> loadClientsFromFile(const std::string &fileName)
     }
     return vClients;
 }
+std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
+{
+    std::vector<stUserInfo> vUsersInfo;
+    std::fstream myfile;
+    myfile.open(userFile, std::ios::in);
+    if (myfile.is_open())
+    {
+        std::string line;
+        stUserInfo user;
+        while (getline(myfile, line))
+        {
+            user = convertLineUserToRecord(line);
+            vUsersInfo.push_back(user);
+        }
+        myfile.close();
+    }
+    return vUsersInfo;
+}
+stClientInfo readClientInfo(const std::vector<stClientInfo> &vClients)
+{
+    stClientInfo client;
+    std::cout << "Enter Account Number?";
+    getline(std::cin >> std::ws, client.accountNumber);
+    while (findClientByAccountNumber(vClients, client.accountNumber))
+    {
+        std::cout << "Client with [" << client.accountNumber << "] already exists, Enter another Account Number?";
+        getline(std::cin, client.accountNumber);
+    }
+    std::cout << "Enter Pine Code ?";
+    getline(std::cin, client.PinCode);
+    std::cout << "Enter Name  ?";
+    getline(std::cin, client.name);
+    std::cout << "Enter Phone ?";
+    getline(std::cin, client.phone);
+    std::cout << "Enter Account Balance?";
+    std::cin >> client.accountBalance;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return client;
+}
 
 void printClientInfo(const stClientInfo &client)
 {
@@ -116,7 +239,108 @@ void printClientInfo(const stClientInfo &client)
               << "| " << std::setw(12) << std::left << client.phone
               << "| " << std::setw(12) << std::left << client.accountBalance;
 }
-// 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+void printClientCard(const stClientInfo &client)
+{
+    std::cout << "The Following are the client details\n";
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "Account Number   : " << client.accountNumber
+              << "\nPin Code       : " << client.PinCode
+              << "\nName           : " << client.name
+              << "\nPhone          : " << client.phone
+              << "\nAccount Balance: " << client.accountBalance;
+    std::cout << "\n----------------------------------------------------------------\n";
+}
+void printUserCard(stUserInfo user)
+{
+    std::cout << "The Following are the user details\n";
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "User Name   : " << user.userName
+              << "\nPassword    : " << user.password
+              << "\nPermissions : " << user.permissions;
+    std::cout << "\n----------------------------------------------------------------\n";
+}
+void printUserInfo(stUserInfo user)
+{
+    std::cout << "| " << std::setw(30) << std::left << user.userName << " | " << std::setw(15) << user.password << " | " << std::setw(5) << user.permissions << std::endl;
+}
+void DeniedScreen()
+{
+    system("clear");
+    std::cout << "------------------------------------------------------------\n";
+    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease contact With Your Admin.\n";
+    std::cout << "------------------------------------------------------------\n";
+}
+
+
+bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClients)
+{
+    std::fstream myFile;
+    stClientInfo client = readClientInfo(vClients);
+    vClients.push_back(client);
+    myFile.open(fileName, std::ios::app | std::ios::out);
+    if (myFile.is_open())
+    {
+
+        myFile << convertRecordToLine(client);
+        myFile << std::endl;
+        myFile.close();
+        return true;
+    }
+    myFile.close();
+    return false;
+}
+bool saveClientsToFile(const std::string &fileName, const std::vector<stClientInfo> &vClients)
+{
+    std::fstream myFile;
+    myFile.open(fileName, std::ios::out);
+    if (myFile.is_open())
+    {
+        for (const stClientInfo &c : vClients)
+        {
+            if (c.markToDelete == false)
+            {
+                myFile << convertRecordToLine(c) << std::endl;
+            }
+        }
+        myFile.close();
+        return true;
+    }
+    myFile.close();
+    return false;
+}
+void updateClientInfo(stClientInfo &client)
+{
+    std::cout << "Enter PinCode? ";
+    getline(std::cin >> std::ws, client.PinCode);
+    std::cout << "Enter Name? ";
+    getline(std::cin, client.name);
+    std::cout << "Enter Phone? ";
+    getline(std::cin, client.phone);
+    std::cout << "Enter Balance? ";
+    std::cin >> client.accountBalance;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+bool saveUsersToFile(std::string userFile, std::vector<stUserInfo> &vUser)
+{
+    std::fstream myfile;
+    std::string line;
+    myfile.open(userFile, std::ios::out);
+    if (myfile.is_open())
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            if (!user.markToDelete)
+            {
+                myfile << convertUserRecordToLine(user) << std::endl;
+            }
+        }
+        myfile.close();
+        return true;
+    }
+    myfile.close();
+    return false;
+}
+
 void showClientsListScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pShowClientList))
@@ -140,84 +364,6 @@ void showClientsListScreen()
     }
     std::cout << "\n____________________________________________________________________________________________________________________\n";
 }
-
-bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber, stClientInfo &client)
-{
-    for (const stClientInfo &c : vClients)
-    {
-        if (c.accountNumber == accountNumber)
-        {
-            client = c;
-            return true;
-        }
-    }
-    return false;
-}
-bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
-{
-    for (const stClientInfo &c : vClients)
-    {
-        if (c.accountNumber == accountNumber)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::string readAccountNumber()
-{
-    std::string s;
-    std::cout << "Please Enter Account Number \n";
-    getline(std::cin, s);
-    return s;
-}
-
-stClientInfo readClientInfo(const std::vector<stClientInfo> &vClients)
-{
-    stClientInfo client;
-    std::cout << "Enter Account Number?";
-    getline(std::cin >> std::ws, client.accountNumber);
-    while (findClientByAccountNumber(vClients, client.accountNumber))
-    {
-        std::cout << "Client with [" << client.accountNumber << "] already exists, Enter another Account Number?";
-        getline(std::cin, client.accountNumber);
-    }
-    std::cout << "Enter Pine Code ?";
-    getline(std::cin, client.PinCode);
-    std::cout << "Enter Name  ?";
-    getline(std::cin, client.name);
-    std::cout << "Enter Phone ?";
-    getline(std::cin, client.phone);
-    std::cout << "Enter Account Balance?";
-    std::cin >> client.accountBalance;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    return client;
-}
-
-std::string convertRecordToLine(const stClientInfo &client, const std::string &separator = "#//#")
-{
-    return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
-}
-
-bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClients)
-{
-    std::fstream myFile;
-    stClientInfo client = readClientInfo(vClients);
-    vClients.push_back(client);
-    myFile.open(fileName, std::ios::app | std::ios::out);
-    if (myFile.is_open())
-    {
-
-        myFile << convertRecordToLine(client);
-        myFile << std::endl;
-        myFile.close();
-        return true;
-    }
-    myFile.close();
-    return false;
-}
-// 2222222222222222222222222222222222222222222222222
 void addClientsScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pAddClientScreen))
@@ -244,39 +390,6 @@ void addClientsScreen()
         }
     } while (tolower(addMore) == 'y');
 }
-
-void printClientCard(const stClientInfo &client)
-{
-    std::cout << "The Following are the client details\n";
-    std::cout << "----------------------------------------------------------------\n";
-    std::cout << "Account Number   : " << client.accountNumber
-              << "\nPin Code       : " << client.PinCode
-              << "\nName           : " << client.name
-              << "\nPhone          : " << client.phone
-              << "\nAccount Balance: " << client.accountBalance;
-    std::cout << "\n----------------------------------------------------------------\n";
-}
-
-bool saveClientsToFile(const std::string &fileName, const std::vector<stClientInfo> &vClients)
-{
-    std::fstream myFile;
-    myFile.open(fileName, std::ios::out);
-    if (myFile.is_open())
-    {
-        for (const stClientInfo &c : vClients)
-        {
-            if (c.markToDelete == false)
-            {
-                myFile << convertRecordToLine(c) << std::endl;
-            }
-        }
-        myFile.close();
-        return true;
-    }
-    myFile.close();
-    return false;
-}
-// 333333333333333333333333333333333333333
 void deleteClientByAccountNumberScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pDeleteClient))
@@ -322,20 +435,6 @@ void deleteClientByAccountNumberScreen()
         std::cout << "Client with Account Number(" << accountNumber << ") is not found\n";
     }
 }
-
-void updateClientInfo(stClientInfo &client)
-{
-    std::cout << "Enter PinCode? ";
-    getline(std::cin >> std::ws, client.PinCode);
-    std::cout << "Enter Name? ";
-    getline(std::cin, client.name);
-    std::cout << "Enter Phone? ";
-    getline(std::cin, client.phone);
-    std::cout << "Enter Balance? ";
-    std::cin >> client.accountBalance;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-// 4444444444444444444444444444444
 void updateClientInfoByAccountNumberScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pUpdateClient))
@@ -376,7 +475,6 @@ void updateClientInfoByAccountNumberScreen()
         std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
     }
 }
-// 5555555
 void findClientScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pFindClient))
@@ -400,14 +498,12 @@ void findClientScreen()
         std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
     }
 }
-
 void endProgramScreen()
 {
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Program Ends :-)\n";
     std::cout << "----------------------------------------------------------------------------\n\n";
 }
-
 void goBackToMainMenu()
 {
     std::cout << "\n\nPress any key to go back to main menu...";
@@ -416,20 +512,6 @@ void goBackToMainMenu()
     system("clear");
     mainMenu();
 }
-
-short readNumberBetween(short from, short to)
-
-{
-    short num;
-    do
-    {
-        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
-        std::cin >> num;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    } while (num < from || num > to);
-    return num;
-}
-
 void mainMenu()
 {
     system("clear");
@@ -446,7 +528,6 @@ void mainMenu()
     std::cout << "====================================================================================================\n";
     performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
 }
-
 void performMainMenuOption(enMainMenuOption option)
 {
     switch (option)
@@ -503,275 +584,6 @@ void performMainMenuOption(enMainMenuOption option)
     }
 }
 
-std::string ReadUsername()
-{
-    std::string s;
-    std::cout << "Please Enter username \n";
-    getline(std::cin >> std::ws, s);
-    return s;
-}
-
-stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
-{
-    stUserInfo user;
-    std::vector<std::string> vUserString = vSplit(line, separator);
-    if (vUserString.size() != 3)
-    {
-        throw std::runtime_error("Invalid user record");
-    }
-    user.userName = vUserString[0];
-    user.password = vUserString[1];
-    user.permissions = std::stoi(vUserString[2]);
-    return user;
-};
-std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
-{
-    std::vector<stUserInfo> vUsersInfo;
-    std::fstream myfile;
-    myfile.open(userFile, std::ios::in);
-    if (myfile.is_open())
-    {
-        std::string line;
-        stUserInfo user;
-        while (getline(myfile, line))
-        {
-            user = convertLineUserToRecord(line);
-            vUsersInfo.push_back(user);
-        }
-        myfile.close();
-    }
-    return vUsersInfo;
-}
-// login screen function () {check two value username and password}
-//  function to check the value and return true or false if true go to main menu of false print invalid username/password! the ask to reenter the user name and password
-//  I need to convert line to record
-
-bool checkUser(std::string username, std::string password, stUserInfo &User)
-{
-    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
-    for (stUserInfo &user : vUsers)
-    {
-
-        if (user.userName == username)
-        {
-            if (user.password == password)
-            {
-                User = user;
-                return true;
-            }
-            return false;
-        }
-    }
-
-    return false;
-}
-void loginScreen()
-{
-
-    bool isValid = true;
-    std::string username, password;
-    do
-    {
-        system("clear");
-        std::cout << "---------------------------------------------------------\n";
-        std::cout << "                     Login Screen                        \n";
-        std::cout << "---------------------------------------------------------\n";
-        if (!isValid)
-        {
-            std::cout << "invalid Username/Password!\n";
-        }
-
-        std::cout << "Enter Username?   ";
-        std::getline(std::cin >> std::ws, username);
-        std::cout << "Enter Password?   ";
-        std::getline(std::cin, password);
-        isValid = checkUser(username, password, currentUser);
-        // I must do trim for the inputs before checking
-        // also later I must refactor this function
-    } while (!isValid);
-    mainMenu();
-}
-
-void printUserInfo(stUserInfo user)
-{
-    std::cout << "| " << std::setw(30) << std::left << user.userName << " | " << std::setw(15) << user.password << " | " << std::setw(5) << user.permissions << std::endl;
-}
-void userListScreen()
-{
-    std::vector<stUserInfo> vUser = loadUserFromFile(userFile);
-
-    std::cout << "                    Users List (" << vUser.size() << ") User(s).\n";
-    std::cout << "\n____________________________________________________________________________________________________________________\n";
-    std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
-
-    std::cout << "\n____________________________________________________________________________________________________________________\n";
-    if (vUser.size() == 0)
-    {
-        std::cout << "\t\t\t No Users Available In The System!";
-    }
-    else
-    {
-        for (const stUserInfo &user : vUser)
-        {
-            printUserInfo(user);
-        }
-        std::cout << "\n\n____________________________________________________________________________________________________________________\n";
-    }
-}
-
-// Delete User I need to add mark to delete on my struct and I need a function to print user card
-// Also I need to save this user to user file for that I need covert record to line function
-// and finduser
-// finally delete screen function
-void printUserCard(stUserInfo user)
-{
-    std::cout << "The Following are the user details\n";
-    std::cout << "----------------------------------------------------------------\n";
-    std::cout << "User Name   : " << user.userName
-              << "\nPassword    : " << user.password
-              << "\nPermissions : " << user.permissions;
-    std::cout << "\n----------------------------------------------------------------\n";
-}
-std::string convertUserRecordToLine(stUserInfo user, std::string separator = "#//#")
-{
-    return user.userName + separator + user.password + separator + std::to_string(user.permissions);
-}
-bool saveUsersToFile(std::string userFile, std::vector<stUserInfo> &vUser)
-{
-    std::fstream myfile;
-    std::string line;
-    myfile.open(userFile, std::ios::out);
-    if (myfile.is_open())
-    {
-        for (const stUserInfo &user : vUser)
-        {
-            if (!user.markToDelete)
-            {
-                myfile << convertUserRecordToLine(user) << std::endl;
-            }
-        }
-        myfile.close();
-        return true;
-    }
-    myfile.close();
-    return false;
-}
-bool findUser(std::string username, stUserInfo &user)
-{
-    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
-    for (stUserInfo &u : vUsers)
-    {
-        if (u.userName == username)
-        {
-            user = u;
-            return true;
-        }
-    }
-    return false;
-}
-bool findUser(const std::string username)
-{
-    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
-    for (stUserInfo &u : vUsers)
-    {
-        if (u.userName == username)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-void deleteUserByUsernameScreen()
-{
-
-    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
-
-    std::cout
-        << "--------------------------------------------------------------------\n";
-    std::cout << "\t\t\t Delete User Screen\n";
-    std::cout << "--------------------------------------------------------------------\n\n";
-    stUserInfo user;
-    std::string username = ReadUsername();
-
-    if (username == "Admin" || (username == currentUser.userName))
-    {
-        std::cout << "\n\nYou cannot Delete This User.";
-        return;
-    }
-    if (findUser(username, user))
-    {
-        printUserCard(user);
-        char confirm = 'n';
-        std::cout << "Are you sure you want delete this User? Y/N? ";
-        std::cin >> confirm;
-        if (tolower(confirm) == 'y')
-        {
-            for (stUserInfo &U : vUsers)
-            {
-                if (U.userName == username)
-                {
-                    U.markToDelete = true;
-                    break;
-                }
-            }
-            if (saveUsersToFile(userFile, vUsers))
-            {
-                std::cout << "User deleted successfully.\n";
-            }
-            else
-            {
-                std::cerr << "Error, Delete User goes wrong\n";
-            }
-        }
-    }
-    else
-    {
-        std::cout << "User with Username (" << username << ") is not found!\n";
-    }
-}
-
-void findUserScreen()
-{
-
-    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
-
-    std::cout
-        << "--------------------------------------------------------------------\n";
-    std::cout << "\t\t\t Find User Screen\n";
-    std::cout << "--------------------------------------------------------------------\n\n";
-    stUserInfo user;
-    std::string username = ReadUsername();
-    if (findUser(username, user))
-    {
-        printUserCard(user);
-    }
-    else
-    {
-        std::cout << "User with Username (" << username << ") is not found!\n";
-    }
-}
-enum enManageUsersMenuOption
-{
-    eShowUserList = 1,
-    eAddNewUser = 2,
-    eDeleteUser = 3,
-    eUpdateUser = 4,
-    eFindUser = 5,
-    eMainMenu = 6
-};
-void GoBackToManageUsersMenu()
-{
-    std::cout << "\n\nPress any key to go back to Manage Users Menu...\n";
-    std::string s;
-    getline(std::cin >> std::ws, s);
-    ManageUsersMenuScreen();
-}
-
-// Add Users Screen I need a add user function
-// add user I need to set username password and permissions
-// function to add this user to user file
-//  so I Will declare a function called setPermissions and I will depend on enum and binary logic to solve that
-
 int setUserPermissions()
 {
     int permissions = 0;
@@ -822,6 +634,65 @@ int setUserPermissions()
     }
     return permissions;
 }
+bool checkAccesspermission(enMainMenuPermissions permission)
+{
+    if (currentUser.permissions == enMainMenuPermissions::eAll)
+    {
+        return true;
+    }
+    else if ((permission & currentUser.permissions) == permission)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+bool checkUser(std::string username, std::string password, stUserInfo &User)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &user : vUsers)
+    {
+
+        if (user.userName == username)
+        {
+            if (user.password == password)
+            {
+                User = user;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    return false;
+}
+bool findUser(std::string username, stUserInfo &user)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            user = u;
+            return true;
+        }
+    }
+    return false;
+}
+bool findUser(const std::string username)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 stUserInfo ReadUserInfo()
 {
     stUserInfo user;
@@ -833,7 +704,7 @@ stUserInfo ReadUserInfo()
         std::cin >> user.userName;
     }
     std::cout << "Enter Password?   ";
-    std::getline(std::cin>> std::ws, user.password);
+    std::getline(std::cin >> std::ws, user.password);
     user.permissions = setUserPermissions();
     return user;
 }
@@ -852,6 +723,139 @@ bool AddUserToFile(const std::string &userFile, std::vector<stUserInfo> &vUsers,
     myfile.close();
     return false;
 }
+stUserInfo UpdateUserInfo(std::string username)
+{
+    stUserInfo user;
+    user.userName = username;
+    std::cout << "Enter Password?   ";
+    std::getline(std::cin, user.password);
+    user.permissions = setUserPermissions();
+    return user;
+}
+
+void loginScreen()
+{
+
+    bool isValid = true;
+    std::string username, password;
+    do
+    {
+        system("clear");
+        std::cout << "---------------------------------------------------------\n";
+        std::cout << "                     Login Screen                        \n";
+        std::cout << "---------------------------------------------------------\n";
+        if (!isValid)
+        {
+            std::cout << "invalid Username/Password!\n";
+        }
+
+        std::cout << "Enter Username?   ";
+        std::getline(std::cin >> std::ws, username);
+        std::cout << "Enter Password?   ";
+        std::getline(std::cin, password);
+        isValid = checkUser(username, password, currentUser);
+        // I must do trim for the inputs before checking
+        // also later I must refactor this function
+    } while (!isValid);
+    mainMenu();
+}
+void deleteUserByUsernameScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Delete User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+
+    if (username == "Admin" || (username == currentUser.userName))
+    {
+        std::cout << "\n\nYou cannot Delete This User.";
+        return;
+    }
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+        char confirm = 'n';
+        std::cout << "Are you sure you want delete this User? Y/N? ";
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stUserInfo &U : vUsers)
+            {
+                if (U.userName == username)
+                {
+                    U.markToDelete = true;
+                    break;
+                }
+            }
+            if (saveUsersToFile(userFile, vUsers))
+            {
+                std::cout << "User deleted successfully.\n";
+            }
+            else
+            {
+                std::cerr << "Error, Delete User goes wrong\n";
+            }
+        }
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+    }
+}
+void userListScreen()
+{
+    std::vector<stUserInfo> vUser = loadUserFromFile(userFile);
+
+    std::cout << "                    Users List (" << vUser.size() << ") User(s).\n";
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
+
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    if (vUser.size() == 0)
+    {
+        std::cout << "\t\t\t No Users Available In The System!";
+    }
+    else
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            printUserInfo(user);
+        }
+        std::cout << "\n\n____________________________________________________________________________________________________________________\n";
+    }
+}
+void findUserScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Find User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+    }
+}
+void GoBackToManageUsersMenu()
+{
+    std::cout << "\n\nPress any key to go back to Manage Users Menu...\n";
+    std::string s;
+    getline(std::cin >> std::ws, s);
+    ManageUsersMenuScreen();
+}
 void AddUsersScreen()
 {
     std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
@@ -869,18 +873,6 @@ void AddUsersScreen()
 
     } while (tolower(addMore) == 'y');
 }
-
-// Update user screen I need save to file (iso::out), print user card and find user  I have them already and I need to update user info i must have vUsers with ref
-stUserInfo UpdateUserInfo(std::string username)
-{
-    stUserInfo user;
-    user.userName = username;
-    std::cout << "Enter Password?   ";
-    std::getline(std::cin, user.password);
-    user.permissions = setUserPermissions();
-    return user;
-}
-
 void UpdateUserScreen()
 {
 
@@ -930,7 +922,6 @@ void UpdateUserScreen()
         std::cout << "User with Username (" << username << ") is not found!\n";
     }
 }
-
 void PerformManageUsersMenu(enManageUsersMenuOption option)
 {
     switch (option)
@@ -968,7 +959,6 @@ void PerformManageUsersMenu(enManageUsersMenuOption option)
         break;
     }
 }
-// 666666666666666666666666666666666666666666666
 void ManageUsersMenuScreen()
 {
     if (!checkAccesspermission(enMainMenuPermissions::pManageUser))
@@ -993,29 +983,6 @@ void ManageUsersMenuScreen()
 
 // permissions: I need a denied screen(with back to main menu ... ) and I need function to check permissions the input fot that function should be enum based on what screen user choose
 //  and the output will be true if he allowed or false if he don't have a permission fot that choose
-bool checkAccesspermission(enMainMenuPermissions permission)
-{
-    if (currentUser.permissions == enMainMenuPermissions::eAll)
-    {
-        return true;
-    }
-    else if ((permission & currentUser.permissions) == permission)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void DeniedScreen()
-{
-    system("clear");
-    std::cout << "------------------------------------------------------------\n";
-    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease contact With Your Admin.\n";
-    std::cout << "------------------------------------------------------------\n";
-}
 
 // something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
 int main()
