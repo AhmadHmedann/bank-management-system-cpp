@@ -4,12 +4,13 @@
 #include <iomanip>
 #include <fstream>
 #include <limits>
-
-void mainMenu();
-void transactionMenu();
+#include <stdexcept>
+#include <cctype>
+#include <cstdlib>
 
 
 const std::string fileName = "HmedanBank.txt";
+const std::string userFile = "Users.txt";
 struct stClientInfo
 {
     std::string accountNumber;
@@ -19,7 +20,15 @@ struct stClientInfo
     double accountBalance = 0;
     bool markToDelete = false;
 };
+struct stUserInfo
+{
+    std::string userName;
+    std::string password;
+    int permissions;
+    bool markToDelete = false;
+};
 
+stUserInfo currentUser;
 enum enMainMenuOption
 {
     eShowClientList = 1,
@@ -27,11 +36,94 @@ enum enMainMenuOption
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eTransaction = 6,
+    eManageUserMenu = 6,
     eEndProgram = 7,
 };
+enum enMainMenuPermissions
+{
+    eAll = -1,
+    pShowClientList = 1,
+    pAddClientScreen = 2,
+    pDeleteClient = 4,
+    pUpdateClient = 8,
+    pFindClient = 16,
+    pManageUser = 32,
+};
+enum enManageUsersMenuOption
+{
+    eShowUserList = 1,
+    eAddNewUser = 2,
+    eDeleteUser = 3,
+    eUpdateUser = 4,
+    eFindUser = 5,
+    eMainMenu = 6
+};
+enum enTransactionMenuOption
+{
+    eDeposit = 1,
+    eWithdraw = 2,
+    eTotalBalance = 3,
+    eShowMainMenu = 4,
+};
 
+void mainMenu();
+void ManageUsersMenuScreen();
+void DeniedScreen();
+void loginScreen();
 void performMainMenuOption(enMainMenuOption);
+bool checkAccesspermission(enMainMenuPermissions);
+void transactionMenu();
+
+short readNumberBetween(short from, short to)
+
+{
+    short num;
+    do
+    {
+        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
+        std::cin >> num;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    } while (num < from || num > to);
+    return num;
+}
+std::string readAccountNumber()
+{
+    std::string s;
+    std::cout << "Please Enter Account Number \n";
+    getline(std::cin, s);
+    return s;
+}
+std::string ReadUsername()
+{
+    std::string s;
+    std::cout << "Please Enter username \n";
+    getline(std::cin >> std::ws, s);
+    return s;
+}
+
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber, stClientInfo &client)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            client = c;
+            return true;
+        }
+    }
+    return false;
+}
+bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
+{
+    for (const stClientInfo &c : vClients)
+    {
+        if (c.accountNumber == accountNumber)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 std::vector<std::string> vSplit(std::string s, const std::string &delimiter)
 {
@@ -58,14 +150,38 @@ stClientInfo convertLineToRecord(const std::string &line, const std::string &sep
 {
     std::vector<std::string> vString = vSplit(line, separator);
     stClientInfo client;
+    if (vString.size() != 5)
+    {
+        throw std::runtime_error("Invalid client record");
+    }
     client.accountNumber = vString[0];
     client.PinCode = vString[1];
     client.name = vString[2];
     client.phone = vString[3];
-    client.accountBalance = stod(vString[4]);
+    client.accountBalance = std::stod(vString[4]);
     return client;
 }
-
+stUserInfo convertLineUserToRecord(const std::string &line, std::string separator = "#//#")
+{
+    stUserInfo user;
+    std::vector<std::string> vUserString = vSplit(line, separator);
+    if (vUserString.size() != 3)
+    {
+        throw std::runtime_error("Invalid user record");
+    }
+    user.userName = vUserString[0];
+    user.password = vUserString[1];
+    user.permissions = std::stoi(vUserString[2]);
+    return user;
+};
+std::string convertRecordToLine(const stClientInfo &client, const std::string &separator = "#//#")
+{
+    return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
+}
+std::string convertUserRecordToLine(stUserInfo user, std::string separator = "#//#")
+{
+    return user.userName + separator + user.password + separator + std::to_string(user.permissions);
+}
 std::vector<stClientInfo> loadClientsFromFile(const std::string &fileName)
 {
     std::vector<stClientInfo> vClients;
@@ -83,68 +199,24 @@ std::vector<stClientInfo> loadClientsFromFile(const std::string &fileName)
     }
     return vClients;
 }
-
-void printClientInfo(const stClientInfo &client)
+std::vector<stUserInfo> loadUserFromFile(const std::string &userFile)
 {
-    std::cout << "| " << std::setw(15) << std::left << client.accountNumber
-              << "| " << std::setw(10) << std::left << client.PinCode
-              << "| " << std::setw(40) << std::left << client.name
-              << "| " << std::setw(12) << std::left << client.phone
-              << "| " << std::setw(12) << std::left << client.accountBalance;
-}
-// 1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
-void showClientsListScreen()
-{
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    std::cout << "\t\t\t\t\tClinet List (" << vClients.size() << ") Client (s).\n";
-    std::cout << "\n____________________________________________________________________________________________________________________\n";
-    std::cout << "| " << std::setw(15) << std::left << "Account Number"
-              << "| " << std::setw(10) << std::left << "Pin Code"
-              << "| " << std::setw(40) << std::left << "Client Name"
-              << "| " << std::setw(12) << std::left << "Phone"
-              << "| " << std::setw(12) << std::left << "Balance";
-    std::cout << "\n____________________________________________________________________________________________________________________\n\n";
-    for (const stClientInfo &c : vClients)
+    std::vector<stUserInfo> vUsersInfo;
+    std::fstream myfile;
+    myfile.open(userFile, std::ios::in);
+    if (myfile.is_open())
     {
-        printClientInfo(c);
-        std::cout << std::endl;
-    }
-    std::cout << "\n____________________________________________________________________________________________________________________\n";
-}
-
-bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber, stClientInfo &client)
-{
-    for (const stClientInfo &c : vClients)
-    {
-        if (c.accountNumber == accountNumber)
+        std::string line;
+        stUserInfo user;
+        while (getline(myfile, line))
         {
-            client = c;
-            return true;
+            user = convertLineUserToRecord(line);
+            vUsersInfo.push_back(user);
         }
+        myfile.close();
     }
-    return false;
+    return vUsersInfo;
 }
-
-bool findClientByAccountNumber(const std::vector<stClientInfo> &vClients, const std::string &accountNumber)
-{
-    for (const stClientInfo &c : vClients)
-    {
-        if (c.accountNumber == accountNumber)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::string readAccountNumber()
-{
-    std::string s;
-    std::cout << "Please Enter Account Number \n";
-    getline(std::cin, s);
-    return s;
-}
-
 stClientInfo readClientInfo(const std::vector<stClientInfo> &vClients)
 {
     stClientInfo client;
@@ -167,10 +239,46 @@ stClientInfo readClientInfo(const std::vector<stClientInfo> &vClients)
     return client;
 }
 
-std::string convertRecordToLine(const stClientInfo &client, const std::string &separator = "#//#")
+void printClientInfo(const stClientInfo &client)
 {
-    return client.accountNumber + separator + client.PinCode + separator + client.name + separator + client.phone + separator + std::to_string(client.accountBalance);
+    std::cout << "| " << std::setw(15) << std::left << client.accountNumber
+              << "| " << std::setw(10) << std::left << client.PinCode
+              << "| " << std::setw(40) << std::left << client.name
+              << "| " << std::setw(12) << std::left << client.phone
+              << "| " << std::setw(12) << std::left << client.accountBalance;
 }
+void printClientCard(const stClientInfo &client)
+{
+    std::cout << "The Following are the client details\n";
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "Account Number   : " << client.accountNumber
+              << "\nPin Code       : " << client.PinCode
+              << "\nName           : " << client.name
+              << "\nPhone          : " << client.phone
+              << "\nAccount Balance: " << client.accountBalance;
+    std::cout << "\n----------------------------------------------------------------\n";
+}
+void printUserCard(stUserInfo user)
+{
+    std::cout << "The Following are the user details\n";
+    std::cout << "----------------------------------------------------------------\n";
+    std::cout << "User Name   : " << user.userName
+              << "\nPassword    : " << user.password
+              << "\nPermissions : " << user.permissions;
+    std::cout << "\n----------------------------------------------------------------\n";
+}
+void printUserInfo(stUserInfo user)
+{
+    std::cout << "| " << std::setw(30) << std::left << user.userName << " | " << std::setw(15) << user.password << " | " << std::setw(5) << user.permissions << std::endl;
+}
+void DeniedScreen()
+{
+    system("clear");
+    std::cout << "------------------------------------------------------------\n";
+    std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease contact With Your Admin.\n";
+    std::cout << "------------------------------------------------------------\n";
+}
+
 
 bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClients)
 {
@@ -189,41 +297,6 @@ bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClient
     myFile.close();
     return false;
 }
-// 2222222222222222222222222222222222222222222222222
-void addClientsScreen()
-{
-    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
-    std::cout << "-------------------------------------------------------------------------------\n";
-    std::cout << "\t\t\t\tAdd New Client\n";
-    std::cout << "--------------------------------------------------------------------------------\n";
-    char addMore = 'y';
-    do
-    {
-        std::cout << "Adding New Client:\n";
-        if (addClient(fileName, vClients))
-        {
-            std::cout << "Client Added Successfully, do you want to add more clients? Y/N?";
-            std::cin >> addMore;
-        }
-        else
-        {
-            std::cerr << "Error, try again\n";
-        }
-    } while (tolower(addMore) == 'y');
-}
-
-void printClientCard(const stClientInfo &client)
-{
-    std::cout << "The Following are the client details\n";
-    std::cout << "----------------------------------------------------------------\n";
-    std::cout << "Account Number : " << client.accountNumber
-              << "\nPin Code       : " << client.PinCode
-              << "\nName           : " << client.name
-              << "\nPhone          : " << client.phone
-              << "\nAccount Balance: " << client.accountBalance;
-    std::cout << "\n----------------------------------------------------------------\n";
-}
-
 bool saveClientsToFile(const std::string &fileName, const std::vector<stClientInfo> &vClients)
 {
     std::fstream myFile;
@@ -243,9 +316,95 @@ bool saveClientsToFile(const std::string &fileName, const std::vector<stClientIn
     myFile.close();
     return false;
 }
-// 333333333333333333333333333333333333333
+void updateClientInfo(stClientInfo &client)
+{
+    std::cout << "Enter PinCode? ";
+    getline(std::cin >> std::ws, client.PinCode);
+    std::cout << "Enter Name? ";
+    getline(std::cin, client.name);
+    std::cout << "Enter Phone? ";
+    getline(std::cin, client.phone);
+    std::cout << "Enter Balance? ";
+    std::cin >> client.accountBalance;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+bool saveUsersToFile(std::string userFile, std::vector<stUserInfo> &vUser)
+{
+    std::fstream myfile;
+    std::string line;
+    myfile.open(userFile, std::ios::out);
+    if (myfile.is_open())
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            if (!user.markToDelete)
+            {
+                myfile << convertUserRecordToLine(user) << std::endl;
+            }
+        }
+        myfile.close();
+        return true;
+    }
+    myfile.close();
+    return false;
+}
+
+void showClientsListScreen()
+{
+    if (!checkAccesspermission(enMainMenuPermissions::pShowClientList))
+    {
+        DeniedScreen();
+        return;
+    }
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout << "\t\t\t\t\tClient List (" << vClients.size() << ") Client (s).\n";
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout << "| " << std::setw(15) << std::left << "Account Number"
+              << "| " << std::setw(10) << std::left << "Pin Code"
+              << "| " << std::setw(40) << std::left << "Client Name"
+              << "| " << std::setw(12) << std::left << "Phone"
+              << "| " << std::setw(12) << std::left << "Balance";
+    std::cout << "\n____________________________________________________________________________________________________________________\n\n";
+    for (const stClientInfo &c : vClients)
+    {
+        printClientInfo(c);
+        std::cout << std::endl;
+    }
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+}
+void addClientsScreen()
+{
+    if (!checkAccesspermission(enMainMenuPermissions::pAddClientScreen))
+    {
+        DeniedScreen();
+        return;
+    }
+    std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
+    std::cout << "-------------------------------------------------------------------------------\n";
+    std::cout << "\t\t\t\tAdd New Client\n";
+    std::cout << "--------------------------------------------------------------------------------\n";
+    char addMore = 'y';
+    do
+    {
+        std::cout << "Adding New Client:\n";
+        if (addClient(fileName, vClients))
+        {
+            std::cout << "\nClient Added Successfully, do you want to add more clients? Y/N?";
+            std::cin >> addMore;
+        }
+        else
+        {
+            std::cerr << "Error, try again\n";
+        }
+    } while (tolower(addMore) == 'y');
+}
 void deleteClientByAccountNumberScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pDeleteClient))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout
         << "--------------------------------------------------------------------\n";
@@ -284,22 +443,13 @@ void deleteClientByAccountNumberScreen()
         std::cout << "Client with Account Number(" << accountNumber << ") is not found\n";
     }
 }
-
-void updateClientInfo(stClientInfo &client)
-{
-    std::cout << "Enter PinCode? ";
-    getline(std::cin >> std::ws, client.PinCode);
-    std::cout << "Enter Name? ";
-    getline(std::cin, client.name);
-    std::cout << "Enter Phone? ";
-    getline(std::cin, client.phone);
-    std::cout << "Enter Balance? ";
-    std::cin >> client.accountBalance;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-// 4444444444444444444444444444444
 void updateClientInfoByAccountNumberScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pUpdateClient))
+    {
+        DeniedScreen();
+        return;
+    }
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Update Client Info Screen\n";
@@ -333,9 +483,13 @@ void updateClientInfoByAccountNumberScreen()
         std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
     }
 }
-// 5555555
 void findClientScreen()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pFindClient))
+    {
+        DeniedScreen();
+        return;
+    }
     const std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     std::cout
         << "---------------------------------------------------------------------------\n";
@@ -352,35 +506,21 @@ void findClientScreen()
         std::cout << "Client with Account Number (" << accountNumber << ") is not found \n";
     }
 }
-
 void endProgramScreen()
 {
     std::cout << "---------------------------------------------------------------------------\n";
     std::cout << "\t\t\t Program Ends :-)\n";
     std::cout << "----------------------------------------------------------------------------\n\n";
 }
-
 void goBackToMainMenu()
 {
-    std::cout << "Press any key to go back to main menu...";
+    std::cout << "\n\nPress any key to go back to main menu...";
     std::string line;
     std::getline(std::cin >> std::ws, line);
     system("clear");
     mainMenu();
 }
 
-short readNumberBetween(short from, short to)
-
-{
-    short num;
-    do
-    {
-        std::cout << "Choose what do you want to do?  [" << from << " to " << to << "]?\n";
-        std::cin >> num;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    } while (num < from || num > to);
-    return num;
-}
 
 void mainMenu()
 {
@@ -393,12 +533,11 @@ void mainMenu()
     std::cout << "\t[3] Delete Client.\n";
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
-    std::cout << "\t[6] Transaction\n";
-    std::cout << "\t[7] Exit.\n";
+    std::cout << "\t[6] Manage Users Menu.\n";
+    std::cout << "\t[7] Logout.\n";
     std::cout << "====================================================================================================\n";
     performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
 }
-
 void performMainMenuOption(enMainMenuOption option)
 {
     switch (option)
@@ -437,19 +576,424 @@ void performMainMenuOption(enMainMenuOption option)
         goBackToMainMenu();
         break;
     }
+    case enMainMenuOption::eManageUserMenu:
+    {
+        ManageUsersMenuScreen();
+        goBackToMainMenu(); // if I delete that and no permission fo manage user I think it will end the program
+        // if I added go back to main menu screen in Denied screen that will effect the call stack I will do debug later for both  cases
+        break;
+    }
     case enMainMenuOption::eEndProgram:
     {
         system("clear");
-        endProgramScreen();
+        loginScreen();
         break;
     }
-    case enMainMenuOption::eTransaction:
-        transactionMenu();
+    // case enMainMenuOption::eTransaction:
+    //     transactionMenu();
+    //     break;
+    default:
+        break;
+    }
+}
+int setUserPermissions()
+{
+    int permissions = 0;
+    char answer = 'n';
+    std::cout << "Do you want to give full access? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        return enMainMenuPermissions::eAll;
+    }
+    std::cout << "\nDo you want to give access to : \n";
+
+    std::cout << "Show Client List? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pShowClientList;
+    }
+    std::cout << "Add new Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pAddClientScreen;
+    }
+    std::cout << "Delete Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pDeleteClient;
+    }
+    std::cout << "Update Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pUpdateClient;
+    }
+    std::cout << "find Client? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pFindClient;
+    }
+    std::cout << "Manage User Menu? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pManageUser;
+    }
+    return permissions;
+}
+bool checkAccesspermission(enMainMenuPermissions permission)
+{
+    if (currentUser.permissions == enMainMenuPermissions::eAll)
+    {
+        return true;
+    }
+    else if ((permission & currentUser.permissions) == permission)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+bool checkUser(std::string username, std::string password, stUserInfo &User)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &user : vUsers)
+    {
+
+        if (user.userName == username)
+        {
+            if (user.password == password)
+            {
+                User = user;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    return false;
+}
+bool findUser(std::string username, stUserInfo &user)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            user = u;
+            return true;
+        }
+    }
+    return false;
+}
+bool findUser(const std::string username)
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    for (stUserInfo &u : vUsers)
+    {
+        if (u.userName == username)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+stUserInfo ReadUserInfo()
+{
+    stUserInfo user;
+
+    user.userName = ReadUsername();
+    while (findUser(user.userName))
+    {
+        std::cout << "User with [" << user.userName << "] is already exists, Enter another user name? ";
+        std::cin >> user.userName;
+    }
+    std::cout << "Enter Password?   ";
+    std::getline(std::cin >> std::ws, user.password);
+    user.permissions = setUserPermissions();
+    return user;
+}
+bool AddUserToFile(const std::string &userFile, std::vector<stUserInfo> &vUsers, stUserInfo user)
+{
+
+    vUsers.push_back(user);
+    std::fstream myfile;
+    myfile.open(userFile, std::ios::app | std::ios::out);
+    if (myfile.is_open())
+    {
+        myfile << convertUserRecordToLine(user) << std::endl;
+        myfile.close();
+        return true;
+    }
+    myfile.close();
+    return false;
+}
+stUserInfo UpdateUserInfo(std::string username)
+{
+    stUserInfo user;
+    user.userName = username;
+    std::cout << "Enter Password?   ";
+    std::getline(std::cin, user.password);
+    user.permissions = setUserPermissions();
+    return user;
+}
+
+void loginScreen()
+{
+
+    bool isValid = true;
+    std::string username, password;
+    do
+    {
+        system("clear");
+        std::cout << "---------------------------------------------------------\n";
+        std::cout << "                     Login Screen                        \n";
+        std::cout << "---------------------------------------------------------\n";
+        if (!isValid)
+        {
+            std::cout << "invalid Username/Password!\n";
+        }
+
+        std::cout << "Enter Username?   ";
+        std::getline(std::cin >> std::ws, username);
+        std::cout << "Enter Password?   ";
+        std::getline(std::cin, password);
+        isValid = checkUser(username, password, currentUser);
+        // I must do trim for the inputs before checking
+        // also later I must refactor this function
+    } while (!isValid);
+    mainMenu();
+}
+void deleteUserByUsernameScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Delete User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+
+    if (username == "Admin" || (username == currentUser.userName))
+    {
+        std::cout << "\n\nYou cannot Delete This User.";
+        return;
+    }
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+        char confirm = 'n';
+        std::cout << "Are you sure you want delete this User? Y/N? ";
+        std::cin >> confirm;
+        if (tolower(confirm) == 'y')
+        {
+            for (stUserInfo &U : vUsers)
+            {
+                if (U.userName == username)
+                {
+                    U.markToDelete = true;
+                    break;
+                }
+            }
+            if (saveUsersToFile(userFile, vUsers))
+            {
+                std::cout << "User deleted successfully.\n";
+            }
+            else
+            {
+                std::cerr << "Error, Delete User goes wrong\n";
+            }
+        }
+    }
+}
+void userListScreen()
+{
+    std::vector<stUserInfo> vUser = loadUserFromFile(userFile);
+
+    std::cout << "                    Users List (" << vUser.size() << ") User(s).\n";
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    std::cout << "| " << std::setw(30) << std::left << "User Name" << " | " << std::setw(15) << "Password" << " | " << std::setw(5) << "Permissions" << std::endl;
+
+    std::cout << "\n____________________________________________________________________________________________________________________\n";
+    if (vUser.size() == 0)
+    {
+        std::cout << "\t\t\t No Users Available In The System!";
+    }
+    else
+    {
+        for (const stUserInfo &user : vUser)
+        {
+            printUserInfo(user);
+        }
+        std::cout << "\n\n____________________________________________________________________________________________________________________\n";
+    }
+}
+void findUserScreen()
+{
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t Find User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+    stUserInfo user;
+    std::string username = ReadUsername();
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+    }
+}
+void GoBackToManageUsersMenu()
+{
+    std::cout << "\n\nPress any key to go back to Manage Users Menu...\n";
+    std::string s;
+    getline(std::cin >> std::ws, s);
+    ManageUsersMenuScreen();
+}
+void AddUsersScreen()
+{
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    char addMore = 'y';
+    do
+    {
+        std::cout
+            << "--------------------------------------------------------------------\n";
+        std::cout << "\t\t\t Add User Screen\n";
+        std::cout << "--------------------------------------------------------------------\n\n";
+        stUserInfo user = ReadUserInfo();
+        AddUserToFile(userFile, vUsers, user);
+        std::cout << "\nDo you want to add more Users? Y/N?";
+        std::cin >> addMore;
+
+    } while (tolower(addMore) == 'y');
+}
+void UpdateUserScreen()
+{
+
+    std::cout
+        << "--------------------------------------------------------------------\n";
+    std::cout << "\t\t\t update User Screen\n";
+    std::cout << "--------------------------------------------------------------------\n\n";
+
+    std::vector<stUserInfo> vUsers = loadUserFromFile(userFile);
+    std::string username = ReadUsername();
+    stUserInfo user;
+    if (username == "Admin" || (username == currentUser.userName))
+    {
+        std::cout << "\n\nYou cannot Update This User.";
+        return;
+    }
+    if (findUser(username, user))
+    {
+        printUserCard(user);
+        char confirm = 'n';
+        std::cout << "Are you sure you want update this User? Y/N? ";
+        std::cin >> confirm;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        if (tolower(confirm) == 'y')
+        {
+            for (stUserInfo &u : vUsers)
+            {
+                if (u.userName == username)
+                {
+                    u = UpdateUserInfo(username);
+                    break;
+                }
+            }
+            if (saveUsersToFile(userFile, vUsers))
+            {
+
+                std::cout << "User updated successfully.\n";
+            }
+            else
+            {
+                std::cerr << "Error, update User goes wrong\n";
+            }
+        }
+    }
+    else
+    {
+        std::cout << "User with Username (" << username << ") is not found!\n";
+    }
+}
+void PerformManageUsersMenu(enManageUsersMenuOption option)
+{
+    switch (option)
+    {
+    case enManageUsersMenuOption::eShowUserList:
+        system("clear");
+        userListScreen();
+        GoBackToManageUsersMenu();
+        break;
+    case enManageUsersMenuOption::eDeleteUser:
+        system("clear");
+        deleteUserByUsernameScreen();
+        GoBackToManageUsersMenu();
+        break;
+    case enManageUsersMenuOption::eAddNewUser:
+        system("clear");
+        AddUsersScreen();
+        GoBackToManageUsersMenu();
+        break;
+    case enManageUsersMenuOption::eFindUser:
+        system("clear");
+        findUserScreen();
+        GoBackToManageUsersMenu();
+        break;
+    case enManageUsersMenuOption::eUpdateUser:
+        system("clear");
+        UpdateUserScreen();
+        GoBackToManageUsersMenu();
+        break;
+    case enManageUsersMenuOption::eMainMenu:
+
+        mainMenu();
         break;
     default:
         break;
     }
 }
+void ManageUsersMenuScreen()
+{
+    if (!checkAccesspermission(enMainMenuPermissions::pManageUser))
+    {
+        DeniedScreen();
+        // here add go back to main menu
+        return;
+    }
+    system("clear");
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t\t\t\tManage Users Menu Screen\n";
+    std::cout << "====================================================================================================\n";
+    std::cout << "\t[1] Show Users List.\n";
+    std::cout << "\t[2] Add New User(s).\n";
+    std::cout << "\t[3] Delete User.\n";
+    std::cout << "\t[4] Update User.\n";
+    std::cout << "\t[5] Find User.\n";
+    std::cout << "\t[6] Main Menu.\n";
+    std::cout << "====================================================================================================\n";
+    PerformManageUsersMenu((enManageUsersMenuOption)readNumberBetween(1, 6));
+}
+
+// permissions: I need a denied screen(with back to main menu ... ) and I need function to check permissions the input fot that function should be enum based on what screen user choose
+//  and the output will be true if he allowed or false if he don't have a permission fot that choose
+
+// something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
+
 
 double readPositiveNumber(std::string message)
 {
@@ -487,8 +1031,7 @@ bool depositBalanceToClientByAccountNumber(const std::string &accountNumber, con
     }
     return false;
 }
-
-void depositMoneyInAccount( std::string &accountNumber)
+void depositMoneyInAccount(std::string & accountNumber)
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     stClientInfo client;
@@ -500,29 +1043,29 @@ void depositMoneyInAccount( std::string &accountNumber)
 
     printClientCard(client);
     double amount = readPositiveNumber("Please Enter Deposit Amount?");
-    depositBalanceToClientByAccountNumber(accountNumber,amount,vClients);
+    depositBalanceToClientByAccountNumber(accountNumber, amount, vClients);
 }
 
-void withDrawMoneyFromAccount( std::string &accountNumber)
+void withDrawMoneyFromAccount(std::string &accountNumber)
 {
 
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     stClientInfo client;
-        while(!findClientByAccountNumber(vClients,accountNumber,client))
-        {
-            std::cout << "Client with [" << accountNumber << "] is not exist.";
-            accountNumber=readAccountNumber();
-        }
+    while (!findClientByAccountNumber(vClients, accountNumber, client))
+    {
+        std::cout << "Client with [" << accountNumber << "] is not exist.";
+        accountNumber = readAccountNumber();
+    }
 
-        printClientCard(client);
+    printClientCard(client);
 
-        double amount = readPositiveNumber("Please Enter WithDraw Amount?");
-        while (amount > client.accountBalance)
-        {
-            std::cout << "Amount Exceeds the balance, you can withdraw up to: " << client.accountBalance << std::endl;
-            amount = readPositiveNumber("Please Enter another amount");
-        }
-        depositBalanceToClientByAccountNumber(accountNumber,amount* -1,vClients);
+    double amount = readPositiveNumber("Please Enter WithDraw Amount?");
+    while (amount > client.accountBalance)
+    {
+        std::cout << "Amount Exceeds the balance, you can withdraw up to: " << client.accountBalance << std::endl;
+        amount = readPositiveNumber("Please Enter another amount");
+    }
+    depositBalanceToClientByAccountNumber(accountNumber, amount * -1, vClients);
 }
 
 void depositScreen()
@@ -572,14 +1115,6 @@ void showTransactionList()
     std::cout << "\t\t\t\t\t\tTotal Balance = " << total << std::endl;
 }
 
-enum enTransactionMenuOption
-{
-    eDeposit = 1,
-    eWithdraw = 2,
-    eTotalBalance = 3,
-    eMainMenu = 4,
-};
-
 void goBackToTransactionMenu()
 {
     std::cout << "Press any key to go back to main menu...";
@@ -608,7 +1143,7 @@ void performTransactionMenu(enTransactionMenuOption choose)
         showTransactionList();
         goBackToTransactionMenu();
         break;
-    case enTransactionMenuOption::eMainMenu:
+    case enTransactionMenuOption::eShowMainMenu:
         mainMenu();
         break;
     default:
@@ -629,9 +1164,7 @@ void transactionMenu()
     std::cout << "=======================================================================================================\n";
     performTransactionMenu((enTransactionMenuOption)readNumberBetween(1, 4));
 }
-
 int main()
 {
-
-    mainMenu();
+    loginScreen();
 }
