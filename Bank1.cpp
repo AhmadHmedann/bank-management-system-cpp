@@ -8,7 +8,6 @@
 #include <cctype>
 #include <cstdlib>
 
-
 const std::string fileName = "HmedanBank.txt";
 const std::string userFile = "Users.txt";
 struct stClientInfo
@@ -36,8 +35,9 @@ enum enMainMenuOption
     eDeleteClient = 3,
     eUpdateClient = 4,
     eFindClient = 5,
-    eManageUserMenu = 6,
-    eEndProgram = 7,
+    eTransactions=6,
+    eManageUserMenu = 7,
+    eEndProgram = 8,
 };
 enum enMainMenuPermissions
 {
@@ -47,7 +47,8 @@ enum enMainMenuPermissions
     pDeleteClient = 4,
     pUpdateClient = 8,
     pFindClient = 16,
-    pManageUser = 32,
+    pTransactions=32,
+    pManageUser = 64,
 };
 enum enManageUsersMenuOption
 {
@@ -278,7 +279,6 @@ void DeniedScreen()
     std::cout << "Access Denied,\nYou Do not have Permission To Do This\nPlease contact With Your Admin.\n";
     std::cout << "------------------------------------------------------------\n";
 }
-
 
 bool addClient(const ::std::string &fileName, std::vector<stClientInfo> &vClients)
 {
@@ -521,7 +521,6 @@ void goBackToMainMenu()
     mainMenu();
 }
 
-
 void mainMenu()
 {
     system("clear");
@@ -533,10 +532,11 @@ void mainMenu()
     std::cout << "\t[3] Delete Client.\n";
     std::cout << "\t[4] Update Client.\n";
     std::cout << "\t[5] Find Client.\n";
-    std::cout << "\t[6] Manage Users Menu.\n";
-    std::cout << "\t[7] Logout.\n";
+    std::cout << "\t[6] Transactions.\n";
+    std::cout << "\t[7] Manage Users Menu.\n";
+    std::cout << "\t[8] Logout.\n";
     std::cout << "====================================================================================================\n";
-    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 7));
+    performMainMenuOption((enMainMenuOption)readNumberBetween(1, 8));
 }
 void performMainMenuOption(enMainMenuOption option)
 {
@@ -589,9 +589,10 @@ void performMainMenuOption(enMainMenuOption option)
         loginScreen();
         break;
     }
-    // case enMainMenuOption::eTransaction:
-    //     transactionMenu();
-    //     break;
+    case enMainMenuOption::eTransactions:
+       
+        transactionMenu();
+        break;
     default:
         break;
     }
@@ -637,6 +638,12 @@ int setUserPermissions()
     if (tolower(answer) == 'y')
     {
         permissions += enMainMenuPermissions::pFindClient;
+    }
+    std::cout << "Transactions? Y/N? ";
+    std::cin >> answer;
+    if (tolower(answer) == 'y')
+    {
+        permissions += enMainMenuPermissions::pTransactions;
     }
     std::cout << "Manage User Menu? Y/N? ";
     std::cin >> answer;
@@ -870,6 +877,7 @@ void AddUsersScreen()
     char addMore = 'y';
     do
     {
+        system("clear");
         std::cout
             << "--------------------------------------------------------------------\n";
         std::cout << "\t\t\t Add User Screen\n";
@@ -989,11 +997,7 @@ void ManageUsersMenuScreen()
     PerformManageUsersMenu((enManageUsersMenuOption)readNumberBetween(1, 6));
 }
 
-// permissions: I need a denied screen(with back to main menu ... ) and I need function to check permissions the input fot that function should be enum based on what screen user choose
-//  and the output will be true if he allowed or false if he don't have a permission fot that choose
-
 // something I did wrong I put goBackToMainMenu inside DeniedScreen that mean I  create infinity of call stack loop Just for remember> I must user return In each choose and that will solve the issue this bug case me two hours.
-
 
 double readPositiveNumber(std::string message)
 {
@@ -1031,7 +1035,7 @@ bool depositBalanceToClientByAccountNumber(const std::string &accountNumber, con
     }
     return false;
 }
-void depositMoneyInAccount(std::string & accountNumber)
+void depositMoneyInAccount(std::string &accountNumber)
 {
     std::vector<stClientInfo> vClients = loadClientsFromFile(fileName);
     stClientInfo client;
@@ -1117,7 +1121,7 @@ void showTransactionList()
 
 void goBackToTransactionMenu()
 {
-    std::cout << "Press any key to go back to main menu...";
+    std::cout << "\n\nPress any key to go back to main menu...";
     std::string line;
     std::getline(std::cin >> std::ws, line);
     system("clear");
@@ -1153,6 +1157,12 @@ void performTransactionMenu(enTransactionMenuOption choose)
 
 void transactionMenu()
 {
+    if (!checkAccesspermission(enMainMenuPermissions::pTransactions))
+    {
+        DeniedScreen();
+        goBackToMainMenu();
+        return;
+    }
     system("clear");
     std::cout << "====================================================================================================\n";
     std::cout << "\t\t\t\t Transaction Menu Screen\n";
@@ -1167,4 +1177,5 @@ void transactionMenu()
 int main()
 {
     loginScreen();
+   
 }
